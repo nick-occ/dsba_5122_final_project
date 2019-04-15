@@ -5,7 +5,7 @@ getOpioidPrescribers <- function(data, state) {
     if (state == "All") {
       result <- data %>%
         filter(opioid_drug_flag == "Y" | long_acting_opioid_drug_flag == "Y") %>%
-        group_by(nppes_provider_state, generic_name) %>%
+        group_by(nppes_provider_state, drug_name) %>%
         summarise(sumPrescribers = sum(number_of_prescribers)) %>%
         arrange(desc(sumPrescribers)) %>%
         na.omit()
@@ -14,7 +14,7 @@ getOpioidPrescribers <- function(data, state) {
       result <- data %>%
         filter((opioid_drug_flag == "Y" | long_acting_opioid_drug_flag == "Y") &
                  nppes_provider_state == state) %>%
-        group_by(nppes_provider_state, generic_name) %>%
+        group_by(nppes_provider_state, drug_name) %>%
         summarise(sumPrescribers = sum(number_of_prescribers)) %>%
         arrange(desc(sumPrescribers)) %>%
         na.omit()

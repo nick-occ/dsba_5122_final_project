@@ -10,6 +10,7 @@
 library(shiny)
 library(dplyr)
 library(ggplot2)
+library(RColorBrewer)
 
 source(file = 'drugs.R')
 
@@ -29,7 +30,7 @@ ui <- navbarPage("Opioid Research",
         ))
       ),
       mainPanel(
-        plotOutput("plot"),
+        plotOutput("plot", width = "100%", height = "400px"),
         DT::dataTableOutput("results") 
       )
     )
@@ -52,10 +53,19 @@ server <- function(input, output) {
       )
   })
   
+  # output$plot <- renderPlot({
+  #   ggplot(data=opioidPres(),aes(x=reorder(generic_name,-sumPrescribers), y=sumPrescribers)) + 
+  #     geom_bar(stat="identity") + 
+  #     coord_flip()
+  # })
+  
+  
+  
   output$plot <- renderPlot({
-    ggplot(data=opioidPres(),aes(x=reorder(generic_name,-sumPrescribers), y=sumPrescribers)) + 
-      geom_bar(stat="identity") + 
-      coord_flip()
+    wordcloud::wordcloud(words = opioidPres()$drug_name, 
+                         freq = opioidPres()$sumPrescribers, 
+                         min.freq = 1000,
+                  colors=brewer.pal(8, "Dark2"))
   })
 }
 
