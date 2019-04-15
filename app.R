@@ -30,6 +30,7 @@ ui <- navbarPage("Opioid Research",
         ))
       ),
       mainPanel(
+        textOutput("test"),
         plotOutput("plot", width = "100%", height = "400px"),
         DT::dataTableOutput("results") 
       )
@@ -43,14 +44,36 @@ server <- function(input, output) {
     getOpioidPrescribers(data, input$states)
   })
   
+  opioidClaims <- reactive({
+    getOpioidClaims(data, input$states)
+  })
+  
+  getVariable <- reactive({
+    input$variable
+  })
+
+  output$test <- renderText({
+    getVariable()
+  })
+  
   output$results <- DT::renderDataTable({
-    DT::datatable(
-      opioidPres(), 
-      options = list(
-        lengthMenu = c(10, 30, 50), 
-        pageLength = 10
+    if(getVariable() == "number_of_prescribers") {
+      DT::datatable(
+        opioidPres(), 
+        options = list(
+          lengthMenu = c(10, 30, 50), 
+          pageLength = 10
+          )
+        )
+    } else {
+      DT::datatable(
+        opioidClaims(), 
+        options = list(
+          lengthMenu = c(10, 30, 50), 
+          pageLength = 10
         )
       )
+    }
   })
   
   # output$plot <- renderPlot({
@@ -60,13 +83,26 @@ server <- function(input, output) {
   # })
   
   
+    output$plot <- renderPlot({
+      
+      if(getVariable() == "number_of_prescribers") {
+        wordcloud::wordcloud(words = opioidPres()$drug_name, 
+                             freq = opioidPres()$sumPrescribers, 
+                             min.freq = 1000,
+                             colors=brewer.pal(8, "Dark2"))
+      } else {
+        wordcloud::wordcloud(words = opioidClaims()$drug_name, 
+                             freq = opioidClaims()$sumClaim, 
+                             min.freq = 1000,
+                             max.freq = 10000,
+                             colors=brewer.pal(8, "Dark2"))
+      }
+    })
   
-  output$plot <- renderPlot({
-    wordcloud::wordcloud(words = opioidPres()$drug_name, 
-                         freq = opioidPres()$sumPrescribers, 
-                         min.freq = 1000,
-                  colors=brewer.pal(8, "Dark2"))
-  })
+  
+  
+  
+  
 }
 
 # Run the application 
