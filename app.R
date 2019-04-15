@@ -1,0 +1,64 @@
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
+
+library(shiny)
+library(dplyr)
+library(ggplot2)
+
+source(file = 'drugs.R')
+
+data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
+
+states = readxl::read_xlsx('./data/us_state_coords.xlsx')
+
+# Define UI for application that draws a histogram
+ui <- navbarPage("Opioid Research",
+   tabPanel("Drug Data",
+    sidebarLayout(
+      sidebarPanel(
+        selectInput("states", "States", choices=c("All", states$State)),
+        radioButtons("variable", "Show by:", c(
+          "Number of Prescribers" = "number_of_prescribers",
+          "Number of Claims" = "total_claim_count"
+        ))
+      ),
+      mainPanel(
+        plotOutput("plot"),
+        DT::dataTableOutput("results") 
+      )
+    )
+  )
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+  opioidPres <- reactive({
+    getOpioidPrescribers(data, input$states)
+  })
+  
+  output$results <- DT::renderDataTable({
+    DT::datatable(
+      opioidPres(), 
+      options = list(
+        lengthMenu = c(10, 30, 50), 
+        pageLength = 10
+        )
+      )
+  })
+  
+  output$plot <- renderPlot({
+    ggplot(data=opioidPres(),aes(x=reorder(generic_name,-sumPrescribers), y=sumPrescribers)) + 
+      geom_bar(stat="identity") + 
+      coord_flip()
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
