@@ -14,7 +14,8 @@ library(RColorBrewer)
 
 source(file = 'drugs.R')
 
-data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
+# state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
+# national_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_Ntl_16_Cleaned.xlsx')
 
 states = readxl::read_xlsx('./data/us_state_coords.xlsx')
 
@@ -23,10 +24,11 @@ ui <- navbarPage("Opioid Research",
    tabPanel("Drug Data",
     sidebarLayout(
       sidebarPanel(
-        selectInput("states", "States", choices=c("All", states$State)),
+        selectInput("states", "States", choices=c("All",states$State)),
         radioButtons("variable", "Show by:", c(
           "Number of Prescribers" = "number_of_prescribers",
-          "Number of Claims" = "total_claim_count"
+          "Number of Claims" = "total_claim_count",
+          "Drug Cost" = "total_drug_cost"
         ))
       ),
       mainPanel(
@@ -41,11 +43,15 @@ ui <- navbarPage("Opioid Research",
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   opioidPres <- reactive({
-    getOpioidPrescribers(data, input$states)
+    getOpioidPrescribers(input$states)
   })
   
   opioidClaims <- reactive({
-    getOpioidClaims(data, input$states)
+    getOpioidClaims(input$states)
+  })
+  
+  opioidCost <- reactive({
+    getOpioidCost(input$states)
   })
   
   getVariable <- reactive({
@@ -65,6 +71,14 @@ server <- function(input, output) {
           pageLength = 10
           )
         )
+    } else if (getVariable() == "total_drug_cost") {
+      DT::datatable(
+        opioidCost(), 
+        options = list(
+          lengthMenu = c(10, 30, 50), 
+          pageLength = 10
+        )
+      )
     } else {
       DT::datatable(
         opioidClaims(), 
@@ -90,11 +104,15 @@ server <- function(input, output) {
                              freq = opioidPres()$sumPrescribers, 
                              min.freq = 1000,
                              colors=brewer.pal(8, "Dark2"))
+      } else if (getVariable() == "total_drug_cost") {
+        wordcloud::wordcloud(words = opioidCost()$drug_name, 
+                             freq = opioidCost()$sumCost, 
+                             min.freq = 1000,
+                             colors=brewer.pal(8, "Dark2"))
       } else {
         wordcloud::wordcloud(words = opioidClaims()$drug_name, 
                              freq = opioidClaims()$sumClaim, 
                              min.freq = 1000,
-                             max.freq = 10000,
                              colors=brewer.pal(8, "Dark2"))
       }
     })
