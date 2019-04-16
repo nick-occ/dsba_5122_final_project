@@ -14,9 +14,6 @@ library(RColorBrewer)
 
 source(file = 'drugs.R')
 
-# state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
-# national_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_Ntl_16_Cleaned.xlsx')
-
 states = readxl::read_xlsx('./data/us_state_coords.xlsx')
 
 # Define UI for application that draws a histogram

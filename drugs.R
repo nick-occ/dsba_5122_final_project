@@ -2,6 +2,9 @@ library(dplyr)
 
 state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
 national_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_Ntl_16_Cleaned.xlsx')
+population = readxl::read_xlsx('./data/census_state_population.xlsx')
+
+population
 
 getOpioidPrescribers <- function(state) {
   
