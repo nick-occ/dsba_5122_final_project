@@ -23,15 +23,16 @@ ui <- navbarPage("Opioid Research",
       sidebarPanel(
         selectInput("states", "States", choices=c("All",states$State)),
         radioButtons("variable", "Show by:", c(
-          "Number of Prescribers" = "number_of_prescribers",
-          "Number of Claims" = "total_claim_count",
-          "Drug Cost" = "total_drug_cost"
+          "Number of Prescribers" = "number_of_prescribers_pc",
+          "Number of Claims" = "total_claim_count_pc",
+          "Drug Cost" = "total_drug_cost_pc"
         ))
       ),
       mainPanel(
-        textOutput("test"),
         plotOutput("plot", width = "100%", height = "400px"),
-        DT::dataTableOutput("results") 
+        DT::dataTableOutput("results"),
+        br(),
+        tags$caption("* Values shown are per 100,000 people")
       )
     )
   )
@@ -54,35 +55,59 @@ server <- function(input, output) {
   getVariable <- reactive({
     input$variable
   })
-
-  output$test <- renderText({
-    getVariable()
+  
+  getState <- reactive({
+    input$states
   })
   
   output$results <- DT::renderDataTable({
-    if(getVariable() == "number_of_prescribers") {
+    if(getVariable() == "number_of_prescribers_pc") {
+      
+      if (getState() == "All") {
+        colnames = c("Drug Name", "Total Prescribers")
+      } else {
+        colnames = c("State", "Drug Name", "Total Prescribers")
+      }
+      
       DT::datatable(
         opioidPres(), 
         options = list(
           lengthMenu = c(10, 30, 50), 
           pageLength = 10
-          )
+          ),
+        colnames=colnames
         )
-    } else if (getVariable() == "total_drug_cost") {
+    } else if (getVariable() == "total_drug_cost_pc") {
+      
+      if (getState() == "All") {
+        colnames = c("Drug Name", "Total Drug Cost")
+      } else {
+        colnames = c("State", "Drug Name", "Total Drug Cost")
+      }
+      
       DT::datatable(
         opioidCost(), 
         options = list(
           lengthMenu = c(10, 30, 50), 
           pageLength = 10
-        )
+        ),
+        colnames=colnames
       )
     } else {
+      
+      if (getState() == "All") {
+        colnames = c("Drug Name", "Total Claims")
+      } else {
+        colnames = c("State", "Drug Name", "Total Claims")
+      }
+      
       DT::datatable(
         opioidClaims(), 
         options = list(
           lengthMenu = c(10, 30, 50), 
           pageLength = 10
-        )
+        ),
+        colnames=colnames
       )
     }
   })
@@ -96,28 +121,23 @@ server <- function(input, output) {
   
     output$plot <- renderPlot({
       
-      if(getVariable() == "number_of_prescribers") {
+      if(getVariable() == "number_of_prescribers_pc") {
         wordcloud::wordcloud(words = opioidPres()$drug_name, 
-                             freq = opioidPres()$sumPrescribers, 
+                             freq = opioidPres()$number_of_prescribers_pc, 
                              min.freq = 1000,
                              colors=brewer.pal(8, "Dark2"))
-      } else if (getVariable() == "total_drug_cost") {
+      } else if (getVariable() == "total_drug_cost_pc") {
         wordcloud::wordcloud(words = opioidCost()$drug_name, 
-                             freq = opioidCost()$sumCost, 
+                             freq = opioidCost()$total_drug_cost_pc, 
                              min.freq = 1000,
                              colors=brewer.pal(8, "Dark2"))
       } else {
         wordcloud::wordcloud(words = opioidClaims()$drug_name, 
-                             freq = opioidClaims()$sumClaim, 
+                             freq = opioidClaims()$total_claim_count_pc, 
                              min.freq = 1000,
                              colors=brewer.pal(8, "Dark2"))
       }
     })
-  
-  
-  
-  
-  
 }
 
 # Run the application 
