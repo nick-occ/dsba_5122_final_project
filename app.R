@@ -1,22 +1,20 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+# final project
 
+#libraries
 library(shiny)
 library(dplyr)
+library(DT)
 library(ggplot2)
 library(RColorBrewer)
+library(wordcloud2)
 
+#external source
 source(file = 'drugs.R')
 
+#external file
 states = readxl::read_xlsx('./data/us_state_coords.xlsx')
 
-# Define UI for application that draws a histogram
+#ui portion of shiny app
 ui <- navbarPage("Opioid Research",
    tabPanel("Drug Data",
     sidebarLayout(
@@ -29,8 +27,14 @@ ui <- navbarPage("Opioid Research",
         ))
       ),
       mainPanel(
-        plotOutput("plot", width = "100%", height = "400px"),
-        DT::dataTableOutput("results"),
+        tabsetPanel(
+          tabPanel("Word Cloud",
+                   wordcloud2Output("plot")
+                   ),
+          tabPanel("Data",
+                   DTOutput("results")
+                   )
+        ),
         br(),
         tags$caption("* Values shown are per 100,000 people")
       )
@@ -38,7 +42,7 @@ ui <- navbarPage("Opioid Research",
   )
 )
 
-# Define server logic required to draw a histogram
+# server portion of shiny app
 server <- function(input, output) {
   opioidPres <- reactive({
     getOpioidPrescribers(input$states)
@@ -60,7 +64,31 @@ server <- function(input, output) {
     input$states
   })
   
-  output$results <- DT::renderDataTable({
+  getWordCloudPresc <- reactive({
+    wcOpioidPrescribers(input$states)
+  })
+  
+  getWordCloudClaims <- reactive({
+    wcOpioidClaims(input$states)
+  })
+  
+  getWordCloudCost <- reactive({
+    wcOpioidCost(input$states)
+  })
+  
+  output$plot <- renderWordcloud2({
+    
+    if(getVariable() == "number_of_prescribers_pc") {
+      wordcloud2(getWordCloudPresc(), size=.2, gridSize=-30)
+    } else if (getVariable() == "total_drug_cost_pc") {
+      wordcloud2(getWordCloudCost(), size=.2, gridSize=-30)
+    } else {
+      wordcloud2(getWordCloudClaims(), size=.2, gridSize=-30)
+    }
+    
+  })
+  
+  output$results <- renderDT({
     if(getVariable() == "number_of_prescribers_pc") {
       
       if (getState() == "All") {
@@ -69,14 +97,14 @@ server <- function(input, output) {
         colnames = c("State", "Drug Name", "Total Prescribers")
       }
       
-      DT::datatable(
+      datatable(
         opioidPres(), 
         options = list(
           lengthMenu = c(10, 30, 50), 
           pageLength = 10
-          ),
+        ),
         colnames=colnames
-        )
+      )
     } else if (getVariable() == "total_drug_cost_pc") {
       
       if (getState() == "All") {
@@ -85,7 +113,7 @@ server <- function(input, output) {
         colnames = c("State", "Drug Name", "Total Drug Cost")
       }
       
-      DT::datatable(
+      datatable(
         opioidCost(), 
         options = list(
           lengthMenu = c(10, 30, 50), 
@@ -101,7 +129,7 @@ server <- function(input, output) {
         colnames = c("State", "Drug Name", "Total Claims")
       }
       
-      DT::datatable(
+      datatable(
         opioidClaims(), 
         options = list(
           lengthMenu = c(10, 30, 50), 
@@ -111,35 +139,8 @@ server <- function(input, output) {
       )
     }
   })
-  
-  # output$plot <- renderPlot({
-  #   ggplot(data=opioidPres(),aes(x=reorder(generic_name,-sumPrescribers), y=sumPrescribers)) + 
-  #     geom_bar(stat="identity") + 
-  #     coord_flip()
-  # })
-  
-  
-    output$plot <- renderPlot({
-      
-      if(getVariable() == "number_of_prescribers_pc") {
-        wordcloud::wordcloud(words = opioidPres()$drug_name, 
-                             freq = opioidPres()$number_of_prescribers_pc, 
-                             min.freq = 1000,
-                             colors=brewer.pal(8, "Dark2"))
-      } else if (getVariable() == "total_drug_cost_pc") {
-        wordcloud::wordcloud(words = opioidCost()$drug_name, 
-                             freq = opioidCost()$total_drug_cost_pc, 
-                             min.freq = 1000,
-                             colors=brewer.pal(8, "Dark2"))
-      } else {
-        wordcloud::wordcloud(words = opioidClaims()$drug_name, 
-                             freq = opioidClaims()$total_claim_count_pc, 
-                             min.freq = 1000,
-                             colors=brewer.pal(8, "Dark2"))
-      }
-    })
 }
 
-# Run the application 
+# run shiny app
 shinyApp(ui = ui, server = server)
 

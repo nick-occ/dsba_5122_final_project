@@ -1,8 +1,10 @@
 library(dplyr)
 
+#external files
 state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
 national_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_Ntl_16_Cleaned.xlsx')
 population = readxl::read_xlsx('./data/census_state_population.xlsx')
+
 
 state_pop_op <-
   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
@@ -58,6 +60,31 @@ getOpioidPrescribers <- function(state) {
     result
 }
 
+wcOpioidPrescribers <- function(state) {
+  if (state == "All") {
+    result <- national_pop_op %>%
+      mutate(
+        freq = as.integer(number_of_prescribers_pc),
+        word = substr(drug_name,1,25)
+      ) %>%
+      select(word, freq) %>%
+      arrange(desc(freq)) %>%
+      na.omit()
+    
+  } else {
+    result <- state_pop_op %>%
+      mutate(
+        freq = number_of_prescribers_pc,
+        word = substr(drug_name,1,25)
+      ) %>%
+      filter(nppes_provider_state == state) %>%
+      select(word, freq) %>%
+      arrange(desc(freq)) %>%
+      na.omit()
+  }
+  result
+}
+
 getOpioidClaims <- function(state) {
   
   if (state == "All") {
@@ -78,6 +105,31 @@ getOpioidClaims <- function(state) {
   result
 }
 
+wcOpioidClaims <- function(state) {
+  if (state == "All") {
+    result <- national_pop_op %>%
+      mutate(
+        freq = round(total_claim_count_pc),
+        word = substr(drug_name,1,25)
+      ) %>%
+      select(word, freq) %>%
+      arrange(desc(freq)) %>%
+      na.omit()
+    
+  } else {
+    result <- state_pop_op %>%
+      mutate(
+        freq = round(total_claim_count_pc),
+        word = substr(drug_name,1,25)
+      ) %>%
+      filter(nppes_provider_state == state) %>%
+      select(word, freq) %>%
+      arrange(desc(freq)) %>%
+      na.omit()
+  }
+  result
+}
+
 getOpioidCost <- function(state) {
   
   if (state == "All") {
@@ -93,6 +145,31 @@ getOpioidCost <- function(state) {
       mutate(total_drug_cost_pc = round(total_drug_cost_pc,2)) %>%
       filter(nppes_provider_state == state) %>%
       arrange(desc(total_drug_cost_pc)) %>%
+      na.omit()
+  }
+  result
+}
+
+wcOpioidCost <- function(state) {
+  if (state == "All") {
+    result <- national_pop_op %>%
+      mutate(
+        freq = round(total_drug_cost_pc),
+        word = substr(drug_name,1,25)
+      ) %>%
+      select(word, freq) %>%
+      arrange(desc(freq)) %>%
+      na.omit()
+    
+  } else {
+    result <- state_pop_op %>%
+      mutate(
+        freq = round(total_drug_cost_pc),
+        word = substr(drug_name,1,25)
+      ) %>%
+      filter(nppes_provider_state == state) %>%
+      select(word, freq) %>%
+      arrange(desc(freq)) %>%
       na.omit()
   }
   result
