@@ -1,0 +1,61 @@
+---
+title: "mapping"
+author: "Nicholas Occhipinti"
+date: "April 17, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(sf)
+library(dplyr)
+library(ggplot2)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+us <- st_read("shp/states.shp")
+
+us
+```
+
+```{r}
+state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
+
+
+state_data <- state_data %>% 
+  select(nppes_provider_state,number_of_prescribers) %>%
+  na.omit()
+
+
+state_data <- state_data %>%
+  group_by(nppes_provider_state) %>%
+  summarise(PRESCRIBERS = sum(number_of_prescribers)) %>%
+  mutate(STATE_NAME = nppes_provider_state) %>%
+  select(STATE_NAME, PRESCRIBERS)
+
+state_data  
+
+
+state_op <- merge(us,state_data)
+
+state_op
+
+us2 <- st_read(state_op)
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+ggplot() + 
+  geom_sf(data=state_op,aes(fill=PRESCRIBERS)) + theme_bw() + ggtitle('US')
+```

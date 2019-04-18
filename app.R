@@ -29,14 +29,14 @@ ui <- navbarPage("Opioid Research",
       mainPanel(
         tabsetPanel(
           tabPanel("Word Cloud",
-                   wordcloud2Output("plot")
+                   wordcloud2Output("plot"),
+                   tags$b(tags$caption("* Some words were trimmed to fit into plot."))
                    ),
           tabPanel("Data",
                    DTOutput("results")
                    )
         ),
-        br(),
-        tags$caption("* Values shown are per 100,000 people")
+        tags$b(tags$caption("* Values shown are per 100,000 people"))
       )
     )
   )
