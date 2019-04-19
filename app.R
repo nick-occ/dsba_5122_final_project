@@ -7,19 +7,27 @@ library(DT)
 library(ggplot2)
 library(RColorBrewer)
 library(wordcloud2)
+library(sf)
+library(plotly)
 
 #external source
 source(file = 'drugs.R')
+source(file = 'map.R')
 
 #external file
 states = readxl::read_xlsx('./data/us_state_coords.xlsx')
+
+us <- st_read("shp/states_4326.shp")
 
 #ui portion of shiny app
 ui <- navbarPage("Opioid Research",
    tabPanel("Drug Data",
     sidebarLayout(
       sidebarPanel(
-        selectInput("states", "States", choices=c("All",states$State)),
+        conditionalPanel(
+          condition = "input.drugTab == 'Word Cloud' | input.drugTab == 'Data'",
+            selectInput("states", "States", choices=c("All",states$State))  
+          ),
         radioButtons("variable", "Show by:", c(
           "Number of Prescribers" = "number_of_prescribers_pc",
           "Number of Claims" = "total_claim_count_pc",
@@ -27,19 +35,22 @@ ui <- navbarPage("Opioid Research",
         ))
       ),
       mainPanel(
-        tabsetPanel(
+        tabsetPanel(id="drugTab",
           tabPanel("Word Cloud",
                    wordcloud2Output("plot"),
                    tags$b(tags$caption("* Some words were trimmed to fit into plot."))
                    ),
           tabPanel("Data",
                    DTOutput("results")
-                   )
-        ),
+                   ),
+          tabPanel("Map",
+                   plotlyOutput("drugmap")
+                   ),
         tags$b(tags$caption("* Values shown are per 100,000 people"))
       )
     )
   )
+   )
 )
 
 # server portion of shiny app
@@ -137,6 +148,58 @@ server <- function(input, output) {
         ),
         colnames=colnames
       )
+    }
+  })
+  
+  # map output
+  
+  output$drugmap <- renderPlotly({
+    g <- list(
+      scope = 'usa',
+      projection = list(type = 'albers usa'),
+      showlakes = TRUE,
+      lakecolor = toRGB('white')
+    )
+  
+    if(getVariable() == "number_of_prescribers_pc") {
+      state_map <- merge(us,getStateOpPresc())
+      state_map$hover <- with(state_map, paste(STATE_NAME))
+  
+      p <-plot_geo(state_map, locationmode = 'USA-states') %>%
+        add_trace(
+          z = ~PRESCRIBERS, text = ~hover, locations = ~STATE_ABBR,
+          color = ~PRESCRIBERS, colors = 'Reds'
+        ) %>%
+        layout(
+          title = '2016 Prescribers By State',
+          geo = g
+        )
+    } else if (getVariable() == "total_drug_cost_pc") {
+      state_map <- merge(us,getStateOpCost())
+      state_map$hover <- with(state_map, paste(STATE_NAME))
+      
+      p <-plot_geo(state_map, locationmode = 'USA-states') %>%
+        add_trace(
+          z = ~COST, text = ~hover, locations = ~STATE_ABBR,
+          color = ~COST, colors = 'Reds'
+        ) %>%
+        layout(
+          title = '2016 Cost By State',
+          geo = g
+        )
+    } else {
+      state_map <- merge(us,getStateOpClaim())
+      state_map$hover <- with(state_map, paste(STATE_NAME))
+      
+      p <-plot_geo(state_map, locationmode = 'USA-states') %>%
+        add_trace(
+          z = ~CLAIMS, text = ~hover, locations = ~STATE_ABBR,
+          color = ~CLAIMS, colors = 'Reds'
+        ) %>%
+        layout(
+          title = '2016 Claims By State',
+          geo = g
+        )
     }
   })
 }
