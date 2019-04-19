@@ -10,16 +10,16 @@ state_pop_op <-
   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
   filter(opioid_drug_flag == "Y" | long_acting_opioid_drug_flag == "Y") %>%
   mutate(
-    number_of_prescribers_pc = (number_of_prescribers/Y2016) * 100000,
-    total_claim_count_pc = (total_claim_count/Y2016) * 100000,
-    total_drug_cost_pc = (total_drug_cost/Y2016) * 100000
+    number_of_prescribers = (number_of_prescribers/Y2016) * 100000,
+    total_claim_count = (total_claim_count/Y2016) * 100000,
+    total_drug_cost = (total_drug_cost/Y2016) * 100000
   ) %>%
   select(
     nppes_provider_state, 
     drug_name,
-    number_of_prescribers_pc,
-    total_claim_count_pc,
-    total_drug_cost_pc
+    number_of_prescribers,
+    total_claim_count,
+    total_drug_cost
   )
 
 national_pop = population %>%
@@ -29,149 +29,63 @@ national_pop = population %>%
 national_pop_op <- national_data %>%
   filter(opioid_drug_flag == "Y" | long_acting_opioid_drug_flag == "Y") %>%
   mutate(
-    number_of_prescribers_pc = (number_of_prescribers/as.integer(national_pop)) * 100000,
-    total_claim_count_pc = (total_claim_count/as.integer(national_pop)) * 100000,
-    total_drug_cost_pc = (total_drug_cost/as.integer(national_pop)) * 100000
+    number_of_prescribersc = (number_of_prescribers/as.integer(national_pop)) * 100000,
+    total_claim_count = (total_claim_count/as.integer(national_pop)) * 100000,
+    total_drug_cost = (total_drug_cost/as.integer(national_pop)) * 100000
   ) %>%
   select(
     drug_name,
-    number_of_prescribers_pc,
-    total_claim_count_pc,
-    total_drug_cost_pc
+    number_of_prescribers,
+    total_claim_count,
+    total_drug_cost
   )
 
-getOpioidPrescribers <- function(state) {
+getOpioidData <- function(state, variable, rounding) {
+  result <- getDataSource(state) %>%
+    mutate(pc = round(!!variable,rounding)) %>%
+    arrange(desc(pc))
   
-    if (state == "All") {
-      result <- national_pop_op %>%
-        mutate(number_of_prescribers_pc = round(number_of_prescribers_pc,2)) %>%
-        select(drug_name, number_of_prescribers_pc) %>%
-        arrange(desc(number_of_prescribers_pc)) %>%
-        na.omit()
-      
-    } else {
-      result <- state_pop_op %>%
-        mutate(number_of_prescribers_pc = round(number_of_prescribers_pc,2)) %>%
-        select(nppes_provider_state, drug_name, number_of_prescribers_pc) %>%
-        filter(nppes_provider_state == state) %>%
-        arrange(desc(number_of_prescribers_pc)) %>%
-        na.omit()
-    }
-    result
-}
-
-wcOpioidPrescribers <- function(state) {
-  if (state == "All") {
-    result <- national_pop_op %>%
-      mutate(
-        freq = as.integer(number_of_prescribers_pc),
-        word = substr(drug_name,1,25)
-      ) %>%
-      select(word, freq) %>%
-      arrange(desc(freq)) %>%
-      na.omit()
-    
-  } else {
-    result <- state_pop_op %>%
-      mutate(
-        freq = number_of_prescribers_pc,
-        word = substr(drug_name,1,25)
-      ) %>%
+  if (state != "All") {
+    result <- result %>%
       filter(nppes_provider_state == state) %>%
-      select(word, freq) %>%
-      arrange(desc(freq)) %>%
-      na.omit()
+      select(nppes_provider_state, drug_name, pc)
+  } else {
+    result <- result %>%
+      select(drug_name, pc)
   }
-  result
-}
-
-getOpioidClaims <- function(state) {
   
-  if (state == "All") {
-    result <- national_pop_op %>%
-      mutate(total_claim_count_pc = round(total_claim_count_pc,2)) %>%
-      select(drug_name, total_claim_count_pc) %>%
-      arrange(desc(total_claim_count_pc)) %>%
-      na.omit()
-    
-  } else {
-    result <- state_pop_op %>%
-      mutate(total_claim_count_pc = round(total_claim_count_pc,2)) %>%
-      select(nppes_provider_state, drug_name, total_claim_count_pc) %>%
-      filter(nppes_provider_state == state) %>%
-      arrange(desc(total_claim_count_pc)) %>%
-      na.omit()
-  }
-  result
-}
-
-wcOpioidClaims <- function(state) {
-  if (state == "All") {
-    result <- national_pop_op %>%
-      mutate(
-        freq = round(total_claim_count_pc),
-        word = substr(drug_name,1,25)
-      ) %>%
-      select(word, freq) %>%
-      arrange(desc(freq)) %>%
-      na.omit()
-    
-  } else {
-    result <- state_pop_op %>%
-      mutate(
-        freq = round(total_claim_count_pc),
-        word = substr(drug_name,1,25)
-      ) %>%
-      filter(nppes_provider_state == state) %>%
-      select(word, freq) %>%
-      arrange(desc(freq)) %>%
-      na.omit()
-  }
-  result
-}
-
-getOpioidCost <- function(state) {
+  result <- result %>% 
+    na.omit()
   
-  if (state == "All") {
-    result <- national_pop_op %>%
-      mutate(total_drug_cost_pc = round(total_drug_cost_pc,2)) %>%
-      select(drug_name, total_drug_cost_pc) %>%
-      arrange(desc(total_drug_cost_pc)) %>%
-      na.omit()
-    
-  } else {
-    result <- state_pop_op %>%
-      select(nppes_provider_state, drug_name, total_drug_cost_pc) %>%
-      mutate(total_drug_cost_pc = round(total_drug_cost_pc,2)) %>%
-      filter(nppes_provider_state == state) %>%
-      arrange(desc(total_drug_cost_pc)) %>%
-      na.omit()
-  }
   result
 }
 
-wcOpioidCost <- function(state) {
+getDataSource <- function(state) {
   if (state == "All") {
-    result <- national_pop_op %>%
-      mutate(
-        freq = round(total_drug_cost_pc),
-        word = substr(drug_name,1,25)
-      ) %>%
-      select(word, freq) %>%
-      arrange(desc(freq)) %>%
-      na.omit()
-    
+    ds = national_pop_op
   } else {
-    result <- state_pop_op %>%
-      mutate(
-        freq = round(total_drug_cost_pc),
-        word = substr(drug_name,1,25)
-      ) %>%
-      filter(nppes_provider_state == state) %>%
-      select(word, freq) %>%
-      arrange(desc(freq)) %>%
-      na.omit()
+    ds = state_pop_op
   }
+  
+  ds
+}
+
+getWordCloudData <- function(state, variable, charLength) {
+  result <- getDataSource(state) %>%
+    mutate(
+      freq = round(!!variable),
+      word = substr(drug_name,1,charLength)
+    ) 
+  
+  if (state != "All") {
+    result <- result %>%
+      filter(nppes_provider_state == state)
+  }
+  
+  result <- result %>%
+    select(word, freq) %>%
+    arrange(desc(freq)) %>%
+    na.omit()
+  
   result
 }
-  

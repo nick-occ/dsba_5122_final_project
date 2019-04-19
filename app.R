@@ -19,6 +19,19 @@ states = readxl::read_xlsx('./data/us_state_coords.xlsx')
 
 us <- st_read("shp/states_4326.shp")
 
+variableChoiceName <- c(
+  "Number of Prescribers",
+  "Number of Claims",
+  "Drug Cost"
+)
+
+variableChoiceValue <- c(
+  "number_of_prescribers",
+  "total_claim_count",
+  "total_drug_cost"
+)
+
+
 #ui portion of shiny app
 ui <- navbarPage("Opioid Research",
    tabPanel("Drug Data",
@@ -28,13 +41,14 @@ ui <- navbarPage("Opioid Research",
           condition = "input.drugTab == 'Word Cloud' | input.drugTab == 'Data'",
             selectInput("states", "States", choices=c("All",states$State))  
           ),
-        radioButtons("variable", "Show by:", c(
-          "Number of Prescribers" = "number_of_prescribers",
-          "Number of Claims" = "total_claim_count",
-          "Drug Cost" = "total_drug_cost"
-        ))
+        radioButtons("variable",
+                     "Show by:",
+                     choiceNames = variableChoiceName,
+                     choiceValues = variableChoiceValue
+                       )
       ),
       mainPanel(
+        
         tabsetPanel(id="drugTab",
           tabPanel("Word Cloud",
                    wordcloud2Output("plot"),
@@ -55,100 +69,47 @@ ui <- navbarPage("Opioid Research",
 
 # server portion of shiny app
 server <- function(input, output) {
-  opioidPres <- reactive({
-    getOpioidPrescribers(input$states)
-  })
-  
-  opioidClaims <- reactive({
-    getOpioidClaims(input$states)
-  })
-  
-  opioidCost <- reactive({
-    getOpioidCost(input$states)
-  })
   
   getVariable <- reactive({
     input$variable
+  })
+  
+  getVariableName <- reactive({
+    variableChoiceName[match(getVariable(),variableChoiceValue)]
   })
   
   getState <- reactive({
     input$states
   })
   
-  getWordCloudPresc <- reactive({
-    wcOpioidPrescribers(input$states)
+  getOpioid <- reactive({
+    getOpioidData(getState(), sym(getVariable()), 2)
   })
   
-  getWordCloudClaims <- reactive({
-    wcOpioidClaims(input$states)
-  })
-  
-  getWordCloudCost <- reactive({
-    wcOpioidCost(input$states)
+  getWordCloud  <- reactive({
+    getWordCloudData(getState(), sym(getVariable()), 25)
   })
   
   output$plot <- renderWordcloud2({
-    
-    if(getVariable() == "number_of_prescribers") {
-      wordcloud2(getWordCloudPresc(), size=.2, gridSize=-30)
-    } else if (getVariable() == "total_drug_cost") {
-      wordcloud2(getWordCloudCost(), size=.2, gridSize=-30)
-    } else {
-      wordcloud2(getWordCloudClaims(), size=.2, gridSize=-30)
-    }
-    
+    wordcloud2(getWordCloud(), size=.2, gridSize=-30)
   })
   
   output$results <- renderDT({
-    if(getVariable() == "number_of_prescribers") {
-      
-      if (getState() == "All") {
-        colnames = c("Drug Name", "Total Prescribers")
-      } else {
-        colnames = c("State", "Drug Name", "Total Prescribers")
-      }
-      
-      datatable(
-        opioidPres(), 
-        options = list(
-          lengthMenu = c(10, 30, 50), 
-          pageLength = 10
-        ),
-        colnames=colnames
-      )
-    } else if (getVariable() == "total_drug_cost") {
-      
-      if (getState() == "All") {
-        colnames = c("Drug Name", "Total Drug Cost")
-      } else {
-        colnames = c("State", "Drug Name", "Total Drug Cost")
-      }
-      
-      datatable(
-        opioidCost(), 
-        options = list(
-          lengthMenu = c(10, 30, 50), 
-          pageLength = 10
-        ),
-        colnames=colnames
-      )
+    
+    if (getState() == "All") {
+      colnames = c("Drug Name", getVariableName())
     } else {
-      
-      if (getState() == "All") {
-        colnames = c("Drug Name", "Total Claims")
-      } else {
-        colnames = c("State", "Drug Name", "Total Claims")
-      }
-      
-      datatable(
-        opioidClaims(), 
-        options = list(
-          lengthMenu = c(10, 30, 50), 
-          pageLength = 10
-        ),
-        colnames=colnames
-      )
+      colnames = c("State", "Drug Name", getVariableName())
     }
+    
+    datatable(
+      getOpioid(), 
+      options = list(
+        lengthMenu = c(10, 30, 50), 
+        pageLength = 10
+      ),
+      colnames=colnames
+    )
   })
   
   # map output
@@ -164,13 +125,15 @@ server <- function(input, output) {
     state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
     state_map$hover <- with(state_map, paste(STATE_NAME))
     
+    title <- paste("2016 ", getVariableName(), ' By State')
+    
     p <-plot_geo(state_map, locationmode = 'USA-states') %>%
       add_trace(
         z = ~VALUE, text = ~hover, locations = ~STATE_ABBR,
         color = ~VALUE, colors = 'Reds'
       ) %>%
       layout(
-        title = '2016 By State',
+        title = title,
         geo = g
       )
   })

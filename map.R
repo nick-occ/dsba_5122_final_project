@@ -1,7 +1,6 @@
 library(dplyr)
 library(sf)
 library(ggplot2)
-library(lazyeval)
 
 #external files
 state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
