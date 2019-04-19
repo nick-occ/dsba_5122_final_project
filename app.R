@@ -2,7 +2,6 @@
 
 #libraries
 library(shiny)
-library(dplyr)
 library(DT)
 library(ggplot2)
 library(RColorBrewer)
@@ -12,10 +11,8 @@ library(plotly)
 
 #external source
 source(file = 'drugs.R')
-source(file = 'map.R')
 
 #external file
-states = readxl::read_xlsx('./data/us_state_coords.xlsx')
 
 us <- st_read("shp/states_4326.shp")
 
@@ -39,7 +36,7 @@ ui <- navbarPage("Opioid Research",
       sidebarPanel(
         conditionalPanel(
           condition = "input.drugTab == 'Word Cloud' | input.drugTab == 'Data'",
-            selectInput("states", "States", choices=c("All",states$State))  
+            selectInput("states", "States", choices=c("All",state.name))  
           ),
         radioButtons("variable",
                      "Show by:",

@@ -8,7 +8,6 @@ population = readxl::read_xlsx('./data/census_state_population.xlsx')
 
 state_pop_op <-
   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
-  filter(opioid_drug_flag == "Y" | long_acting_opioid_drug_flag == "Y") %>%
   mutate(
     number_of_prescribers = (number_of_prescribers/Y2016) * 100000,
     total_claim_count = (total_claim_count/Y2016) * 100000,
@@ -27,7 +26,6 @@ national_pop = population %>%
   select(Y2016)
 
 national_pop_op <- national_data %>%
-  filter(opioid_drug_flag == "Y" | long_acting_opioid_drug_flag == "Y") %>%
   mutate(
     number_of_prescribersc = (number_of_prescribers/as.integer(national_pop)) * 100000,
     total_claim_count = (total_claim_count/as.integer(national_pop)) * 100000,
@@ -89,3 +87,30 @@ getWordCloudData <- function(state, variable, charLength) {
   
   result
 }
+
+getStateOp <- function(col_name, year, new_col) {
+  VALUE <- quo_name(new_col)
+  
+  state_pop_op <-
+    inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
+    mutate(
+      pc=(!!col_name/!!year) * 100000
+    ) %>%
+    select(
+      nppes_provider_state, 
+      pc
+    ) %>%
+    na.omit() %>%
+    mutate(
+      STATE_NAME = nppes_provider_state,
+      VALUE = round(pc,2)
+    ) %>%
+    select(STATE_NAME, VALUE) %>%
+    group_by(STATE_NAME) %>%
+    summarise(VALUE = sum(VALUE)) %>%
+    arrange(desc(VALUE))
+  
+  state_pop_op
+  
+}
+
