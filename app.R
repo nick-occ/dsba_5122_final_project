@@ -29,9 +29,9 @@ ui <- navbarPage("Opioid Research",
             selectInput("states", "States", choices=c("All",states$State))  
           ),
         radioButtons("variable", "Show by:", c(
-          "Number of Prescribers" = "number_of_prescribers_pc",
-          "Number of Claims" = "total_claim_count_pc",
-          "Drug Cost" = "total_drug_cost_pc"
+          "Number of Prescribers" = "number_of_prescribers",
+          "Number of Claims" = "total_claim_count",
+          "Drug Cost" = "total_drug_cost"
         ))
       ),
       mainPanel(
@@ -89,9 +89,9 @@ server <- function(input, output) {
   
   output$plot <- renderWordcloud2({
     
-    if(getVariable() == "number_of_prescribers_pc") {
+    if(getVariable() == "number_of_prescribers") {
       wordcloud2(getWordCloudPresc(), size=.2, gridSize=-30)
-    } else if (getVariable() == "total_drug_cost_pc") {
+    } else if (getVariable() == "total_drug_cost") {
       wordcloud2(getWordCloudCost(), size=.2, gridSize=-30)
     } else {
       wordcloud2(getWordCloudClaims(), size=.2, gridSize=-30)
@@ -100,7 +100,7 @@ server <- function(input, output) {
   })
   
   output$results <- renderDT({
-    if(getVariable() == "number_of_prescribers_pc") {
+    if(getVariable() == "number_of_prescribers") {
       
       if (getState() == "All") {
         colnames = c("Drug Name", "Total Prescribers")
@@ -116,7 +116,7 @@ server <- function(input, output) {
         ),
         colnames=colnames
       )
-    } else if (getVariable() == "total_drug_cost_pc") {
+    } else if (getVariable() == "total_drug_cost") {
       
       if (getState() == "All") {
         colnames = c("Drug Name", "Total Drug Cost")
@@ -160,47 +160,19 @@ server <- function(input, output) {
       showlakes = TRUE,
       lakecolor = toRGB('white')
     )
-  
-    if(getVariable() == "number_of_prescribers_pc") {
-      state_map <- merge(us,getStateOpPresc())
-      state_map$hover <- with(state_map, paste(STATE_NAME))
-  
-      p <-plot_geo(state_map, locationmode = 'USA-states') %>%
-        add_trace(
-          z = ~PRESCRIBERS, text = ~hover, locations = ~STATE_ABBR,
-          color = ~PRESCRIBERS, colors = 'Reds'
-        ) %>%
-        layout(
-          title = '2016 Prescribers By State',
-          geo = g
-        )
-    } else if (getVariable() == "total_drug_cost_pc") {
-      state_map <- merge(us,getStateOpCost())
-      state_map$hover <- with(state_map, paste(STATE_NAME))
-      
-      p <-plot_geo(state_map, locationmode = 'USA-states') %>%
-        add_trace(
-          z = ~COST, text = ~hover, locations = ~STATE_ABBR,
-          color = ~COST, colors = 'Reds'
-        ) %>%
-        layout(
-          title = '2016 Cost By State',
-          geo = g
-        )
-    } else {
-      state_map <- merge(us,getStateOpClaim())
-      state_map$hover <- with(state_map, paste(STATE_NAME))
-      
-      p <-plot_geo(state_map, locationmode = 'USA-states') %>%
-        add_trace(
-          z = ~CLAIMS, text = ~hover, locations = ~STATE_ABBR,
-          color = ~CLAIMS, colors = 'Reds'
-        ) %>%
-        layout(
-          title = '2016 Claims By State',
-          geo = g
-        )
-    }
+    
+    state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
+    state_map$hover <- with(state_map, paste(STATE_NAME))
+    
+    p <-plot_geo(state_map, locationmode = 'USA-states') %>%
+      add_trace(
+        z = ~VALUE, text = ~hover, locations = ~STATE_ABBR,
+        color = ~VALUE, colors = 'Reds'
+      ) %>%
+      layout(
+        title = '2016 By State',
+        geo = g
+      )
   })
 }
 
