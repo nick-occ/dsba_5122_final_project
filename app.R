@@ -8,6 +8,7 @@ library(RColorBrewer)
 library(wordcloud2)
 library(sf)
 library(plotly)
+library(reshape2)
 
 #external source
 source(file = 'drugs.R')
@@ -15,6 +16,13 @@ source(file = 'drugs.R')
 #external file
 
 us <- st_read("shp/states_4326.shp")
+
+g <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showlakes = TRUE,
+  lakecolor = toRGB('white')
+)
 
 variableChoiceName <- c(
   "Number of Prescribers",
@@ -60,8 +68,19 @@ ui <- navbarPage("Opioid Research",
         tags$b(tags$caption("* Values shown are per 100,000 people"))
       )
     )
-  )
    )
+  ),
+  tabPanel("Death Data",
+    sidebarLayout(
+      sidebarPanel(
+        sliderInput("deathyear", "Year", min=1999, max=2015,value=1999,sep = "")
+      ),
+      mainPanel(
+        plotlyOutput("deathmap"),
+        plotlyOutput("deathrace")
+      )
+    )
+  )
 )
 
 # server portion of shiny app
@@ -83,6 +102,15 @@ server <- function(input, output) {
     getOpioidData(getState(), sym(getVariable()), 2)
   })
   
+  
+  getDeathYear <- reactive({
+    input$deathyear
+  })
+  
+  getDeath <- reactive({
+    getRaceData(getDeathYear())
+  })
+  
   getWordCloud  <- reactive({
     getWordCloudData(getState(), sym(getVariable()), 25)
   })
@@ -90,6 +118,17 @@ server <- function(input, output) {
   output$plot <- renderWordcloud2({
     wordcloud2(getWordCloud(), size=.2, gridSize=-30)
   })
+  
+  plotRace <- function(data, title_location) {
+    g <- ggplot(data,aes(reorder(variable,-value),value, fill=as.vector(unique(variable)))) + 
+      geom_bar(stat="identity") + 
+      ggtitle(paste("Opioid Deaths in", title_location, "During", getDeathYear())) + 
+      xlab("Race") +
+      ylab("Deaths") +
+      theme(legend.position="none")
+    
+    g
+  }
   
   output$results <- renderDT({
     
@@ -112,12 +151,6 @@ server <- function(input, output) {
   # map output
   
   output$drugmap <- renderPlotly({
-    g <- list(
-      scope = 'usa',
-      projection = list(type = 'albers usa'),
-      showlakes = TRUE,
-      lakecolor = toRGB('white')
-    )
     
     state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
     state_map$hover <- with(state_map, paste(STATE_NAME))
@@ -133,6 +166,50 @@ server <- function(input, output) {
         title = title,
         geo = g
       )
+  })
+  
+  output$deathmap <- renderPlotly({
+    deathmap <- merge(us,getDeath())
+    deathmap$hover <- with(deathmap, paste(STATE_NAME))
+    deathmap$click <- with(deathmap, paste(STATE_ABBR))
+    
+    deathplot <- plot_geo(deathmap, locationmode = 'USA-states', source="deathplot") %>%
+      add_trace(
+        z = ~total, text = ~hover, locations = ~STATE_ABBR,
+        color = ~total, colors = 'Reds', key=~STATE_NAME
+      ) %>%
+      layout(
+        geo = g
+      )
+  })
+
+  output$deathrace <- renderPlotly({
+
+    s <- event_data("plotly_hover", source = "deathplot")
+    
+    if (length(s) > 0) {
+      state_data <- 
+        getRaceData(getDeathYear(),s[["key"]]) %>%
+        select(STATE_NAME,year,black_non_hispanic, hispanic, white_non_hispanic, unknown)
+      
+      state_data <- melt(state_data, c("STATE_NAME", "year"))
+      
+      plotRace(state_data,s[['key']])
+      
+    } else {
+      us_data <- 
+        getRaceData(getDeathYear()) %>%
+        select(year,black_non_hispanic, hispanic, white_non_hispanic, unknown)
+      
+      us_data <- melt(us_data, c("year"))
+      
+      us_data <- us_data %>%
+        group_by(year, variable) %>%
+        summarise(value = sum(value))
+      
+      plotRace(us_data,"the US")
+    }
+    
   })
 }
 

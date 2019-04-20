@@ -1,10 +1,12 @@
 library(dplyr)
+library(reshape2)
 
 #external files
 state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
 national_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_Ntl_16_Cleaned.xlsx')
 population = readxl::read_xlsx('./data/census_state_population.xlsx')
-
+opioids_race_data = readxl::read_xlsx('./data/opioid_death_by_race_cleaned.xlsx')
+  
 
 state_pop_op <-
   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
@@ -37,6 +39,23 @@ national_pop_op <- national_data %>%
     total_claim_count,
     total_drug_cost
   )
+
+getRaceData <- function(inYear, state = "All") {
+  result <- opioids_race_data %>%
+    filter(year == as.character(inYear))
+  
+  if (state != "All") {
+    result <- result %>%
+      filter(STATE_NAME == state)
+  }
+  
+  result
+}
+
+meltData <- function(data,fields) {
+  melted <- melt(data,fields)
+  melted
+}
 
 getOpioidData <- function(state, variable, rounding) {
   result <- getDataSource(state) %>%
