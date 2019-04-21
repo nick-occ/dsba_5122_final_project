@@ -37,6 +37,16 @@ variableChoiceValue <- c(
 )
 
 
+deathChoiceName <- c(
+  "Race",
+  "Age"
+)
+
+deathChoiceValue <- c(
+  "opioids_race_data",
+  "opioids_age_data"
+)
+
 #ui portion of shiny app
 ui <- navbarPage("Opioid Research",
    tabPanel("Drug Data",
@@ -73,11 +83,16 @@ ui <- navbarPage("Opioid Research",
   tabPanel("Death Data",
     sidebarLayout(
       sidebarPanel(
-        sliderInput("deathyear", "Year", min=1999, max=2015,value=1999,sep = "")
+        sliderInput("deathyear", "Year", min=1999, max=2015,value=1999,sep = ""),
+        radioButtons("deathchoice",
+                     "Show by:",
+                     choiceNames = deathChoiceName,
+                     choiceValues = deathChoiceValue
+        )
       ),
       mainPanel(
         plotlyOutput("deathmap"),
-        plotlyOutput("deathrace")
+        plotlyOutput("deathby")
       )
     )
   )
@@ -94,6 +109,14 @@ server <- function(input, output) {
     variableChoiceName[match(getVariable(),variableChoiceValue)]
   })
   
+  getDeathChoice <- reactive({
+    input$deathchoice
+  })
+  
+  getDeathChoiceName <- reactive({
+    deathChoiceName[match(getDeathChoice(),deathChoiceValue)]
+  })
+  
   getState <- reactive({
     input$states
   })
@@ -108,7 +131,11 @@ server <- function(input, output) {
   })
   
   getDeath <- reactive({
-    getRaceData(getDeathYear())
+    if (getDeathChoiceName() == "Race") {
+      getRaceData(getDeathYear())  
+    } else {
+      getAgeData(getDeathYear())  
+    } 
   })
   
   getWordCloud  <- reactive({
@@ -125,6 +152,17 @@ server <- function(input, output) {
       ggtitle(paste("Opioid Deaths in", title_location, "During", getDeathYear())) + 
       xlab("Race") +
       ylab("Deaths") +
+      theme(legend.position="none")
+    
+    g
+  }
+  
+  plotDeathBy <- function(data, title_location, xlabel, ylabel, title_by) {
+    g <- ggplot(data,aes(reorder(variable,-value),value, fill=as.vector(unique(variable)))) + 
+      geom_bar(stat="identity") + 
+      ggtitle(paste("Opioid Deaths in", title_location, "During", getDeathYear(), "By", title_by)) + 
+      xlab(xlabel) +
+      ylab(ylabel) +
       theme(legend.position="none")
     
     g
@@ -183,31 +221,35 @@ server <- function(input, output) {
       )
   })
 
-  output$deathrace <- renderPlotly({
+  output$deathby <- renderPlotly({
 
     s <- event_data("plotly_hover", source = "deathplot")
     
+    us_data <- 
+      getDeath() %>%
+      select(-STATE_NAME)
+    
     if (length(s) > 0) {
-      state_data <- 
-        getRaceData(getDeathYear(),s[["key"]]) %>%
-        select(STATE_NAME,year,black_non_hispanic, hispanic, white_non_hispanic, unknown)
-      
+      if (getDeathChoiceName() == "Race") {
+        state_data <- 
+          getRaceData(getDeathYear(),s[["key"]])
+      } else {
+        state_data <- 
+          getAgeData(getDeathYear(),s[["key"]])
+      }
+        
       state_data <- melt(state_data, c("STATE_NAME", "year"))
       
-      plotRace(state_data,s[['key']])
+      plotDeathBy(state_data,s[['key']],"Race", "Death", getDeathChoiceName())
       
     } else {
-      us_data <- 
-        getRaceData(getDeathYear()) %>%
-        select(year,black_non_hispanic, hispanic, white_non_hispanic, unknown)
-      
       us_data <- melt(us_data, c("year"))
       
       us_data <- us_data %>%
         group_by(year, variable) %>%
         summarise(value = sum(value))
       
-      plotRace(us_data,"the US")
+      plotDeathBy(us_data,"the US","Age Group", "Death", getDeathChoiceName())
     }
     
   })
