@@ -7,9 +7,10 @@ national_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_Ntl_16_Clean
 population = readxl::read_xlsx('./data/census_state_population.xlsx')
 opioids_race_data = readxl::read_xlsx('./data/opioid_death_by_race_cleaned.xlsx')
 opioids_age_data = readxl::read_xlsx('./data/opioid_overdose_death_by_age_group.xlsx')
+death_by_opioids = readxl::read_xlsx('./data/death_by_opioid.xlsx')
   
 
-state_pop_op <-
+headstate_pop_op <-
   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
   mutate(
     number_of_prescribers = (number_of_prescribers/Y2016) * 100000,
@@ -55,6 +56,18 @@ getRaceData <- function(inYear, state = "All") {
 
 getAgeData <- function(inYear, state="United States") {
   result <- opioids_age_data %>%
+    filter(year == as.character(inYear))
+  
+  if (state != "United States") {
+    result <- result %>%
+      filter(STATE_NAME == state)
+  }
+  
+  result
+}
+
+getOpioidDeathData <- function(inYear, state="United States") {
+  result <- death_by_opioids %>%
     filter(year == as.character(inYear))
   
   if (state != "United States") {

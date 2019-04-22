@@ -40,12 +40,14 @@ variableChoiceValue <- c(
 
 deathChoiceName <- c(
   "Race",
-  "Age"
+  "Age",
+  "Type of Opioid"
 )
 
 deathChoiceValue <- c(
   "opioids_race_data",
-  "opioids_age_data"
+  "opioids_age_data",
+  "death_by_opioids"
 )
 
 #ui portion of shiny app
@@ -142,9 +144,11 @@ server <- function(input, output) {
   getDeath <- reactive({
     if (getDeathChoiceName() == "Race") {
       getRaceData(getDeathYear())  
-    } else {
+    } else if(getDeathChoiceName() == "Age") {
       getAgeData(getDeathYear())  
-    } 
+    } else {
+      getOpioidDeathData(getDeathYear())
+    }
   })
   
   getWordCloud  <- reactive({
@@ -237,16 +241,22 @@ server <- function(input, output) {
     
     us_data <- 
       getDeath() %>%
-      select(-STATE_NAME)
+      select(-STATE_NAME, -total)
     
     if (length(s) > 0) {
       if (getDeathChoiceName() == "Race") {
         state_data <- 
           getRaceData(getDeathYear(),s[["key"]])
-      } else {
+      } else if (getDeathChoiceName() == "Age") {
         state_data <- 
           getAgeData(getDeathYear(),s[["key"]])
+      } else {
+        state_data <- 
+          getOpioidDeathData(getDeathYear(),s[["key"]])
       }
+      
+      state_data <- state_data %>%
+        select(-total)
         
       state_data <- melt(state_data, c("STATE_NAME", "year"))
       
