@@ -9,6 +9,7 @@ library(wordcloud2)
 library(sf)
 library(plotly)
 library(reshape2)
+library(shinythemes)
 
 #external source
 source(file = 'drugs.R')
@@ -48,54 +49,62 @@ deathChoiceValue <- c(
 )
 
 #ui portion of shiny app
-ui <- navbarPage("Opioid Research",
-   tabPanel("Drug Data",
-    sidebarLayout(
-      sidebarPanel(
-        conditionalPanel(
-          condition = "input.drugTab == 'Word Cloud' | input.drugTab == 'Data'",
-            selectInput("states", "States", choices=c("All",state.name))  
+ui <- 
+  
+    navbarPage("Opioid Research",theme = shinytheme("slate"),
+     tabPanel("Drug Data",
+      sidebarLayout(
+        sidebarPanel(
+          tags$head(
+            tags$link(rel = "stylesheet", type = "text/css", href = "app.css")
           ),
-        radioButtons("variable",
-                     "Show by:",
-                     choiceNames = variableChoiceName,
-                     choiceValues = variableChoiceValue
-                       )
-      ),
-      mainPanel(
+          conditionalPanel(
+            condition = "input.drugTab == 'Word Cloud' | input.drugTab == 'Data'",
+              selectInput("states", "States", choices=c("All",state.name))  
+            ),
+          radioButtons("variable",
+                       "Show by:",
+                       choiceNames = variableChoiceName,
+                       choiceValues = variableChoiceValue
+                         )
+        ),
+        mainPanel(
+          
+            tabsetPanel(id="drugTab",
+              tabPanel("Word Cloud",
+                       wordcloud2Output("plot", width="100%", height="80vh"),
+                       tags$b(tags$caption("* Some words were trimmed to fit into plot."))
+                       ),
+              tabPanel("Data",
+                       DTOutput("results", height = "80vh")
+                       ),
+              tabPanel("Map",
+                       textOutput("drugmap_header"),
+                       plotlyOutput("drugmap", height = "80vh")
+                       ),
+            tags$b(tags$caption("* Values shown are per 100,000 people"))
+          )
         
-        tabsetPanel(id="drugTab",
-          tabPanel("Word Cloud",
-                   wordcloud2Output("plot"),
-                   tags$b(tags$caption("* Some words were trimmed to fit into plot."))
-                   ),
-          tabPanel("Data",
-                   DTOutput("results")
-                   ),
-          tabPanel("Map",
-                   plotlyOutput("drugmap")
-                   ),
-        tags$b(tags$caption("* Values shown are per 100,000 people"))
       )
-    )
-   )
-  ),
-  tabPanel("Death Data",
-    sidebarLayout(
-      sidebarPanel(
-        sliderInput("deathyear", "Year", min=1999, max=2015,value=1999,sep = ""),
-        radioButtons("deathchoice",
-                     "Show by:",
-                     choiceNames = deathChoiceName,
-                     choiceValues = deathChoiceValue
+     )
+    ),
+    tabPanel("Death Data",
+      sidebarLayout(
+        sidebarPanel(
+          sliderInput("deathyear", "Year", min=1999, max=2015,value=1999,sep = ""),
+          radioButtons("deathchoice",
+                       "Show by:",
+                       choiceNames = deathChoiceName,
+                       choiceValues = deathChoiceValue
+          )
+        ),
+        mainPanel(
+          plotlyOutput("deathmap"),
+          plotlyOutput("deathby")
         )
-      ),
-      mainPanel(
-        plotlyOutput("deathmap"),
-        plotlyOutput("deathby")
       )
     )
-  )
+  
 )
 
 # server portion of shiny app
@@ -139,11 +148,11 @@ server <- function(input, output) {
   })
   
   getWordCloud  <- reactive({
-    getWordCloudData(getState(), sym(getVariable()), 25)
+    getWordCloudData(getState(), sym(getVariable()), 20)
   })
   
   output$plot <- renderWordcloud2({
-    wordcloud2(getWordCloud(), size=.2, gridSize=-30)
+    wordcloud2(getWordCloud(), size=.5, gridSize=20, color="random-light", backgroundColor = "grey",minRotation = -pi/6, maxRotation = -pi/6)
   })
   
   plotRace <- function(data, title_location) {
@@ -179,8 +188,8 @@ server <- function(input, output) {
     datatable(
       getOpioid(), 
       options = list(
-        lengthMenu = c(10, 30, 50), 
-        pageLength = 10
+        lengthMenu = c(15, 30, 45), 
+        pageLength = 15
       ),
       colnames=colnames
     )
@@ -188,12 +197,14 @@ server <- function(input, output) {
   
   # map output
   
+  output$drugmap_header <- renderText({
+    paste("2016", getVariableName(), ' By State')
+  })
+  
   output$drugmap <- renderPlotly({
     
     state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
     state_map$hover <- with(state_map, paste(STATE_NAME))
-    
-    title <- paste("2016 ", getVariableName(), ' By State')
     
     p <-plot_geo(state_map, locationmode = 'USA-states') %>%
       add_trace(
@@ -201,7 +212,6 @@ server <- function(input, output) {
         color = ~VALUE, colors = 'Reds'
       ) %>%
       layout(
-        title = title,
         geo = g
       )
   })
