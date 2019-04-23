@@ -193,7 +193,18 @@ server <- function(input, output) {
       getOpioid(), 
       options = list(
         lengthMenu = c(15, 30, 45), 
-        pageLength = 15
+        pageLength = 15,
+        initComplete = JS("
+        function(settings, json) {
+          $(this.api().table().header()).css({
+            'background-color': '#f00',
+            'color': '#fff'
+          });
+          $(this.api().table().body()).css({
+            'background-color': '#f00',
+            'color': '#fff'
+          });
+        }")
       ),
       colnames=colnames
     )

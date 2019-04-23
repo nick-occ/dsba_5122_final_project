@@ -8,7 +8,6 @@ population = readxl::read_xlsx('./data/census_state_population.xlsx')
 opioids_race_data = readxl::read_xlsx('./data/opioid_death_by_race_cleaned.xlsx')
 opioids_age_data = readxl::read_xlsx('./data/opioid_overdose_death_by_age_group.xlsx')
 death_by_opioids = readxl::read_xlsx('./data/death_by_opioid.xlsx')
-  
 
 headstate_pop_op <-
   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
@@ -31,7 +30,7 @@ national_pop = population %>%
 
 national_pop_op <- national_data %>%
   mutate(
-    number_of_prescribersc = (number_of_prescribers/as.integer(national_pop)) * 100000,
+    number_of_prescribers = (number_of_prescribers/as.integer(national_pop)) * 100000,
     total_claim_count = (total_claim_count/as.integer(national_pop)) * 100000,
     total_drug_cost = (total_drug_cost/as.integer(national_pop)) * 100000
   ) %>%
