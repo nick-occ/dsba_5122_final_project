@@ -93,7 +93,7 @@ ui <-
     tabPanel("Death Data",
       sidebarLayout(
         sidebarPanel(
-          sliderInput("deathyear", "Year", min=1999, max=2015,value=1999,sep = ""),
+          sliderInput("deathyear", "Year", min=2010, max=2015,value=2010,sep = ""),
           radioButtons("deathchoice",
                        "Show by:",
                        choiceNames = deathChoiceName,
@@ -158,17 +158,6 @@ server <- function(input, output) {
   output$plot <- renderWordcloud2({
     wordcloud2(getWordCloud(), size=.5, gridSize=20, color="random-light", backgroundColor = "grey",minRotation = -pi/6, maxRotation = -pi/6)
   })
-  
-  plotRace <- function(data, title_location) {
-    g <- ggplot(data,aes(reorder(variable,-value),value, fill=as.vector(unique(variable)))) + 
-      geom_bar(stat="identity") + 
-      ggtitle(paste("Opioid Deaths in", title_location, "During", getDeathYear())) + 
-      xlab("Race") +
-      ylab("Deaths") +
-      theme(legend.position="none")
-    
-    g
-  }
   
   plotDeathBy <- function(data, title_location, xlabel, ylabel, title_by) {
     g <- ggplot(data,aes(reorder(variable,-value),value, fill=as.vector(unique(variable)))) + 
@@ -252,7 +241,7 @@ server <- function(input, output) {
     
     us_data <- 
       getDeath() %>%
-      select(-STATE_NAME, -total)
+      select(-STATE_NAME, -total, -pop)
     
     if (length(s) > 0) {
       if (getDeathChoiceName() == "Race") {
@@ -267,11 +256,11 @@ server <- function(input, output) {
       }
       
       state_data <- state_data %>%
-        select(-total)
+        select(-total, -pop)
         
       state_data <- melt(state_data, c("STATE_NAME", "year"))
       
-      plotDeathBy(state_data,s[['key']],"Race", "Death", getDeathChoiceName())
+      plotDeathBy(state_data,s[['key']],getDeathChoiceName(), "Death", getDeathChoiceName())
       
     } else {
       us_data <- melt(us_data, c("year"))
@@ -280,7 +269,7 @@ server <- function(input, output) {
         group_by(year, variable) %>%
         summarise(value = sum(value))
       
-      plotDeathBy(us_data,"the US","Age Group", "Death", getDeathChoiceName())
+      plotDeathBy(us_data,"the US",getDeathChoiceName(), "Death", getDeathChoiceName())
     }
     
   })
