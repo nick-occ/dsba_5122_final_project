@@ -42,14 +42,38 @@ national_pop_op <- national_data %>%
     total_drug_cost
   )
 
+getPopulation <- function(popYear, state) {
+  
+  result <- population %>%
+    filter(State == state) %>%
+    select(!!popYear)
+  
+  as.integer(result)
+}
+
 getRaceData <- function(inYear, state = "All") {
+  
   result <- opioids_race_data %>%
     filter(year == as.character(inYear))
+  
+  result <- result %>%
+    rowwise()%>%
+    mutate(pop = getPopulation(paste("Y",inYear,sep=""), STATE_NAME))
+    
   
   if (state != "All") {
     result <- result %>%
       filter(STATE_NAME == state)
   }
+  
+  result <- result %>%
+    mutate(
+      total = ((total/pop) * 100000),
+      black_non_hispanic = ((black_non_hispanic/pop) * 100000),
+      hispanic = ((hispanic/pop) * 100000),
+      white_non_hispanic = ((white_non_hispanic/pop) * 100000),
+      unknown = ((unknown/pop) * 100000),
+    )
   
   result
 }
@@ -58,10 +82,24 @@ getAgeData <- function(inYear, state="United States") {
   result <- opioids_age_data %>%
     filter(year == as.character(inYear))
   
+  result <- result %>%
+    rowwise()%>%
+    mutate(pop = getPopulation(paste("Y",inYear,sep=""), STATE_NAME))
+  
   if (state != "United States") {
     result <- result %>%
       filter(STATE_NAME == state)
   }
+  
+  result <- result %>%
+    mutate(
+      total = ((total/pop) * 100000),
+      age_0_24 = (age_0_24/pop) * 100000,
+      age_25_34 = (age_25_34/pop) * 100000,
+      age_35_44 = (age_35_44/pop) * 100000,
+      age_45_54 = (age_45_54/pop) * 100000,
+      age_55_over = (age_55_over/pop) * 100000
+    )
   
   result
 }
@@ -70,10 +108,23 @@ getOpioidDeathData <- function(inYear, state="United States") {
   result <- death_by_opioids %>%
     filter(year == as.character(inYear))
   
+  result <- result %>%
+    rowwise()%>%
+    mutate(pop = getPopulation(paste("Y",inYear,sep=""), STATE_NAME))
+  
   if (state != "United States") {
     result <- result %>%
       filter(STATE_NAME == state)
   }
+  
+  result <- result %>%
+    mutate(
+      total = ((total/pop) * 100000),
+      nat_semisynthetic = ((nat_semisynthetic/pop) * 100000),
+      synthetic_non_methadone = ((synthetic_non_methadone/pop) * 100000),
+      methadone = ((methadone/pop) * 100000),
+      heroin = ((heroin/pop) * 100000)
+    )
   
   result
 }

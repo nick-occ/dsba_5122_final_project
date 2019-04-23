@@ -230,7 +230,7 @@ server <- function(input, output) {
     
     us_data <- 
       getDeath() %>%
-      select(-STATE_NAME, -total)
+      select(-STATE_NAME, -total, -pop)
     
     if (length(s) > 0) {
       if (getDeathChoiceName() == "Race") {
