@@ -10,7 +10,7 @@ opioids_age_data = readxl::read_xlsx('./data/opioid_overdose_death_by_age_group.
 death_by_opioids = readxl::read_xlsx('./data/death_by_opioid.xlsx')
   
 
-headstate_pop_op <-
+state_pop_op <-
   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
   mutate(
     number_of_prescribers = (number_of_prescribers/Y2016) * 100000,
