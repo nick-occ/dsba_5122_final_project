@@ -129,11 +129,35 @@ getOpioidDeathData <- function(inYear, state="United States") {
   result
 }
 
-getPresRateData <- function(inYear) {
-  result <-prescriber_rates %>%
-    filter(year == as.character(inYear))
+
+getDeathDataByState <- function(data, state="United States", multiplier) {
+  result <- data %>%
+    filter(STATE_NAME == state & year >= 2010)
+  
+  result <- result %>%
+    rowwise()%>%
+    mutate(pop = getPopulation(paste("Y",year,sep=""), state))
+
+  result <- result %>%
+    mutate(
+      deaths = ((total/pop) * multiplier),
+    ) %>%
+    select(STATE_NAME, year, deaths)
   
   result
+}
+
+getPresRateDataByState <- function(state) {
+  result <-prescriber_rates %>%
+    filter(STATE_NAME == state) %>%
+    select(STATE_NAME,year,prescriber_rate)
+
+  result
+}
+
+getPresRateDeathData <- function(state) {
+  m <- merge(getPresRateDataByState(state),getDeathDataByState(opioids_race_data,state,100000))
+  m
 }
 
 getOpioidData <- function(state, variable, rounding) {
@@ -211,4 +235,5 @@ getStateOp <- function(col_name, year, new_col) {
   state_pop_op
   
 }
+
 

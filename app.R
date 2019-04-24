@@ -115,6 +115,20 @@ ui <-
          plotlyOutput("presratemap")
        )
     )
+  ),
+  tabPanel("Analysis",
+   sidebarLayout(
+     sidebarPanel(
+       tags$head(
+         tags$link(rel = "stylesheet", type = "text/css", href = "app.css")
+       ),
+       selectInput("states_analysis", "States", choices=c(state.name))  
+     ),
+     mainPanel(
+      textOutput("presrate_header"),
+      plotlyOutput("presrate_death")
+     )
+   )
   )
 )
 
@@ -139,6 +153,10 @@ server <- function(input, output) {
   
   getState <- reactive({
     input$states
+  })
+  
+  getStateAnalysis <- reactive({
+    input$states_analysis
   })
   
   getOpioid <- reactive({
@@ -168,6 +186,10 @@ server <- function(input, output) {
     getPresRateData(getPresRateYear())
   })
   
+  getPresRateDeath <- reactive({
+    getPresRateDeathData(getStateAnalysis())
+  })
+  
   getWordCloud  <- reactive({
     getWordCloudData(getState(), sym(getVariable()), 20)
   })
@@ -185,10 +207,6 @@ server <- function(input, output) {
       theme(legend.position="none")
     
     g
-  }
-  
-  plotPresRate <- function(data, title, xlabel, ylabel) {
-    
   }
   
   output$results <- renderDT({
@@ -296,7 +314,6 @@ server <- function(input, output) {
   })
   
   output$presratemap <- renderPlotly({
-    # plotPresRate(getPresRate(), paste(getPresRateYear(), "Prescriber Rates"))
     presRate <- getPresRate()
     
     # state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
@@ -311,6 +328,18 @@ server <- function(input, output) {
         title=paste(getPresRateYear(), "Prescriber Rates"),
         geo = g
       )
+  })
+  
+  output$presrate_header <- renderText({
+    paste("Opioid Prescriber Rate and Death Analysis for ", getStateAnalysis())
+  })
+  
+  output$presrate_death <- renderPlotly({
+    ggplot(getPresRateDeath(),aes(year,prescriber_rate)) + 
+      geom_smooth() + 
+      geom_point(aes(color=deaths,size=deaths)) + 
+      xlab("Year") + 
+      ylab("Prescription Rate")
   })
 }
 
