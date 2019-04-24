@@ -105,8 +105,17 @@ ui <-
           plotlyOutput("deathby")
         )
       )
+    ),
+    tabPanel("Prescriber Rates",
+     sidebarLayout(
+       sidebarPanel(
+         sliderInput("presrateyear", "Year", min=2010, max=2015,value=2010,sep = "")
+       ),
+       mainPanel(
+         plotlyOutput("presratemap")
+       )
     )
-  
+  )
 )
 
 # server portion of shiny app
@@ -151,6 +160,14 @@ server <- function(input, output) {
     }
   })
   
+  getPresRateYear <- reactive({
+    input$presrateyear
+  })
+  
+  getPresRate <- reactive({
+    getPresRateData(getPresRateYear())
+  })
+  
   getWordCloud  <- reactive({
     getWordCloudData(getState(), sym(getVariable()), 20)
   })
@@ -168,6 +185,10 @@ server <- function(input, output) {
       theme(legend.position="none")
     
     g
+  }
+  
+  plotPresRate <- function(data, title, xlabel, ylabel) {
+    
   }
   
   output$results <- renderDT({
@@ -272,6 +293,24 @@ server <- function(input, output) {
       plotDeathBy(us_data,"the US",getDeathChoiceName(), "Death", getDeathChoiceName())
     }
     
+  })
+  
+  output$presratemap <- renderPlotly({
+    # plotPresRate(getPresRate(), paste(getPresRateYear(), "Prescriber Rates"))
+    presRate <- getPresRate()
+    
+    # state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
+    presRate$hover <- with(presRate, paste(STATE_NAME))
+    
+    p <-plot_geo(presRate, locationmode = 'USA-states') %>%
+      add_trace(
+        z = ~prescriber_rate, text = ~hover, locations = ~STATE_ABBR,
+        color = ~prescriber_rate, colors = 'Reds'
+      ) %>%
+      layout(
+        title=paste(getPresRateYear(), "Prescriber Rates"),
+        geo = g
+      )
   })
 }
 

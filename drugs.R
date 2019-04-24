@@ -8,6 +8,7 @@ population = readxl::read_xlsx('./data/census_state_population.xlsx')
 opioids_race_data = readxl::read_xlsx('./data/opioid_death_by_race_cleaned.xlsx')
 opioids_age_data = readxl::read_xlsx('./data/opioid_overdose_death_by_age_group.xlsx')
 death_by_opioids = readxl::read_xlsx('./data/death_by_opioid.xlsx')
+prescriber_rates = readxl::read_xlsx('./data/opioid_prescriber_rates.xlsx')
 
 state_pop_op <-
   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
@@ -124,6 +125,13 @@ getOpioidDeathData <- function(inYear, state="United States") {
       methadone = ((methadone/pop) * 100000),
       heroin = ((heroin/pop) * 100000)
     )
+  
+  result
+}
+
+getPresRateData <- function(inYear) {
+  result <-prescriber_rates %>%
+    filter(year == as.character(inYear))
   
   result
 }
