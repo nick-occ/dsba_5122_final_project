@@ -1,6 +1,13 @@
-#drug_header {
-  color: white;
+.shiny-text-output {
+  color: #a9aaab;
   font-size: x-large;
+text-align: center;
+font-weight: bold; 
+}
+
+#drug_header, #death_header, #presrate_header {
+  color: white;
+  font-size: xx-large;
 text-align: center;
 font-weight: bold;
 }

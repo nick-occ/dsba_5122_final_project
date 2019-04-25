@@ -56,12 +56,13 @@ deathChoiceValue <- c(
 
 #ui portion of shiny app
 ui <- 
-  
+    # navbar menu 
     navbarPage("Opioid Research",theme = shinytheme("slate"),
+     # opioid drug tab
      tabPanel("Opioid Drug Data",
       sidebarLayout(
-        
         sidebarPanel(
+          # show state input for only word cloud and data, not map
           conditionalPanel(
             condition = "input.drugTab == 'Word Cloud' | input.drugTab == 'Data'",
               selectInput("states", "States", choices=c("All",state.name))  
@@ -71,11 +72,12 @@ ui <-
                        choiceNames = variableChoiceName,
                        choiceValues = variableChoiceValue
                          ),
+          # show download only for the data tab
           conditionalPanel(
             condition = "input.drugTab == 'Data'",
             downloadButton("downloadData", "Download")
           )
-        ),
+        ), 
         mainPanel(
             tags$head(
               tags$link(rel = "stylesheet", type = "text/css", href = "app.css")
@@ -84,6 +86,7 @@ ui <-
             tabsetPanel(id="drugTab",
               tabPanel("Word Cloud",
                        textOutput("drugwc_header"),
+                       tags$br(),
                        wordcloud2Output("plot", width="100%", height="80vh"),
                        tags$b(tags$caption("* Some words were trimmed to fit into plot."))
                        ),
@@ -93,6 +96,7 @@ ui <-
                        ),
               tabPanel("Map",
                        textOutput("drugmap_header"),
+                       tags$br(),
                        plotlyOutput("drugmap", height = "80vh")
                        ),
             tags$b(tags$caption("* Values shown are per 100,000 people"))
@@ -101,6 +105,7 @@ ui <-
       )
      )
     ),
+    # end opioid drug tab
     tabPanel("Death Data",
       sidebarLayout(
         sidebarPanel(
@@ -120,6 +125,7 @@ ui <-
           )
         ),
         mainPanel(
+          textOutput("death_header"),
           plotlyOutput("deathmap"),
           plotlyOutput("deathby")
         )
@@ -139,6 +145,7 @@ ui <-
            )
        ),
        mainPanel(
+         textOutput("presrate_header"),
          plotlyOutput("presratemap")
        )
     )
@@ -162,7 +169,7 @@ ui <-
          )
      ),
      mainPanel(
-      textOutput("presrate_header"),
+      textOutput("presratedeath_header"),
       plotlyOutput("presrate_death"),
       textOutput("radar_header"),
       plotlyOutput("radar_death")
@@ -298,6 +305,10 @@ server <- function(input, output) {
   
   # map output
   
+  output$drug_header <- renderText({
+    paste("2016 Medicare Part D Prescriber Data")
+  })
+  
   output$drugwc_header <- renderText({
     paste("2016 Word Cloud of Most Common Opioids by", getVariableName())
   })
@@ -308,6 +319,14 @@ server <- function(input, output) {
   
   output$drugmap_header <- renderText({
     paste("2016 Map by", getVariableName())
+  })
+  
+  output$death_header <- renderText({
+    paste("Opioid Deaths", "in", getDeathYear(), "by", getDeathChoiceName())
+  })
+  
+  output$presrate_header <- renderText({
+    paste("Prescriber Rates in", getPresRateYear())
   })
   
   output$drugmap <- renderPlotly({
@@ -390,12 +409,11 @@ server <- function(input, output) {
         color = ~prescriber_rate, colors = 'Reds'
       ) %>%
       layout(
-        title=paste(getPresRateYear(), "Prescriber Rates"),
         geo = g
       )
   })
   
-  output$presrate_header <- renderText({
+  output$presratedeath_header <- renderText({
     paste("Opioid Prescriber Rate and Death Analysis for ", getStateAnalysis())
   })
   
