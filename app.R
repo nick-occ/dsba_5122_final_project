@@ -16,6 +16,10 @@ source(file = 'drugs.R')
 
 #external file
 
+START_YEAR <- 2010
+END_YEAR <- 2015
+ANIMATE_INTERVAL <- 3000
+
 us <- st_read("shp/states_4326.shp")
 
 g <- list(
@@ -54,12 +58,10 @@ deathChoiceValue <- c(
 ui <- 
   
     navbarPage("Opioid Research",theme = shinytheme("slate"),
-     tabPanel("Drug Data",
+     tabPanel("Opioid Drug Data",
       sidebarLayout(
+        
         sidebarPanel(
-          tags$head(
-            tags$link(rel = "stylesheet", type = "text/css", href = "app.css")
-          ),
           conditionalPanel(
             condition = "input.drugTab == 'Word Cloud' | input.drugTab == 'Data'",
               selectInput("states", "States", choices=c("All",state.name))  
@@ -68,16 +70,25 @@ ui <-
                        "Show by:",
                        choiceNames = variableChoiceName,
                        choiceValues = variableChoiceValue
-                         )
+                         ),
+          conditionalPanel(
+            condition = "input.drugTab == 'Data'",
+            downloadButton("downloadData", "Download")
+          )
         ),
         mainPanel(
-          
+            tags$head(
+              tags$link(rel = "stylesheet", type = "text/css", href = "app.css")
+            ),
+            textOutput("drug_header"),
             tabsetPanel(id="drugTab",
               tabPanel("Word Cloud",
+                       textOutput("drugwc_header"),
                        wordcloud2Output("plot", width="100%", height="80vh"),
                        tags$b(tags$caption("* Some words were trimmed to fit into plot."))
                        ),
               tabPanel("Data",
+                       textOutput("drugdata_header"),
                        DTOutput("results", height = "80vh")
                        ),
               tabPanel("Map",
@@ -93,7 +104,15 @@ ui <-
     tabPanel("Death Data",
       sidebarLayout(
         sidebarPanel(
-          sliderInput("deathyear", "Year", min=2010, max=2015,value=2010,sep = ""),
+          sliderInput(
+            "deathyear", 
+            "Year", 
+            min=START_YEAR, 
+            max=END_YEAR, 
+            value=START_YEAR,
+            sep = "", 
+            animate = animationOptions(interval = ANIMATE_INTERVAL, loop = TRUE)
+            ),
           radioButtons("deathchoice",
                        "Show by:",
                        choiceNames = deathChoiceName,
@@ -109,7 +128,15 @@ ui <-
     tabPanel("Prescriber Rates",
      sidebarLayout(
        sidebarPanel(
-         sliderInput("presrateyear", "Year", min=2010, max=2015,value=2010,sep = "")
+         sliderInput(
+           "presrateyear", 
+           "Year", 
+           min=START_YEAR,
+           max=END_YEAR,
+           value=START_YEAR,
+           sep = "",
+           animate = animationOptions(interval = ANIMATE_INTERVAL, loop = TRUE)
+           )
        ),
        mainPanel(
          plotlyOutput("presratemap")
@@ -124,7 +151,15 @@ ui <-
        ),
        selectInput("states_analysis", "States", choices=c(state.name)),
        tags$hr(),
-       sliderInput("year_analysis", "Year", min=2010, max=2015,value=2010,sep = "")
+       sliderInput(
+         "year_analysis", 
+         "Year", 
+         min=START_YEAR,
+         max=END_YEAR,
+         value=START_YEAR,
+         sep = "",
+         animate = animationOptions(interval = ANIMATE_INTERVAL, loop = TRUE)
+         )
      ),
      mainPanel(
       textOutput("presrate_header"),
@@ -206,6 +241,8 @@ server <- function(input, output) {
     getRadarDeathData(getYearAnalysis(),getStateAnalysis())
   })
   
+  # drug data output
+  
   output$plot <- renderWordcloud2({
     wordcloud2(getWordCloud(), size=.5, gridSize=20, color="random-light", backgroundColor = "grey",minRotation = -pi/6, maxRotation = -pi/6)
   })
@@ -250,14 +287,30 @@ server <- function(input, output) {
     )
   })
   
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(getVariableName(), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(getOpioid(), file, row.names = FALSE)
+    }
+  )
+  
   # map output
   
+  output$drugwc_header <- renderText({
+    paste("2016 Word Cloud of Most Common Opioids by", getVariableName())
+  })
+  
+  output$drugdata_header <- renderText({
+    paste("2016 Most Common Opioids by", getVariableName())
+  })
+  
   output$drugmap_header <- renderText({
-    paste("2016", getVariableName(), ' By State')
+    paste("2016 Map by", getVariableName())
   })
   
   output$drugmap <- renderPlotly({
-    
     state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
     state_map$hover <- with(state_map, paste(STATE_NAME))
     

@@ -255,14 +255,12 @@ getRadarDeathData <- function(inYear, state) {
   
   a <- getAgeData(inYear, state) %>%
     filter(STATE_NAME == state) %>%
-    mutate(unknown_age = unknown) %>%
     select(-total,-pop, -unknown)
   
   a
   
   r <- getRaceData(inYear, state) %>%
     filter(STATE_NAME == state) %>%
-    mutate(unknown_race = unknown) %>%
     select(-total,-pop, -unknown)
   
   r
@@ -286,8 +284,6 @@ getRadarDeathData <- function(inYear, state) {
 plotly_radar <- function(inR, inTheta, inMax) {
   p <- plot_ly(
     type = 'scatterpolar',
-    # r = c(4.47, 1.78, 1.98, 0.407,0.825,1.8,1.88,2.48,1.13,7.52,2,4),
-    # theta = c('Natural Semi-Synthetic','Synth. Non Methadone','Methadone', 'Heroin', "Ages 0-24","Ages 25-34","Ages 35-44","Ages 45-54","Ages 55 and Over","White","Black","Hispanic"),
     r = inR,
     theta = inTheta,
     fill = 'toself'
