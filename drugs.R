@@ -1,5 +1,7 @@
 library(dplyr)
 library(reshape2)
+library(scales)
+library(plotly)
 
 #external files
 state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
@@ -147,6 +149,14 @@ getDeathDataByState <- function(data, state="United States", multiplier) {
   result
 }
 
+getPresRateData <- function(inYear) {
+  result <-prescriber_rates %>%
+    filter(year == as.character(inYear))
+  
+  result
+}
+
+
 getPresRateDataByState <- function(state) {
   result <-prescriber_rates %>%
     filter(STATE_NAME == state) %>%
@@ -234,6 +244,65 @@ getStateOp <- function(col_name, year, new_col) {
   
   state_pop_op
   
+}
+
+getRadarDeathData <- function(inYear, state) {
+  o <- getOpioidDeathData(inYear, state) %>%
+    filter(STATE_NAME == state) %>%
+    select(-total,-pop)
+  
+  o
+  
+  a <- getAgeData(inYear, state) %>%
+    filter(STATE_NAME == state) %>%
+    mutate(unknown_age = unknown) %>%
+    select(-total,-pop, -unknown)
+  
+  a
+  
+  r <- getRaceData(inYear, state) %>%
+    filter(STATE_NAME == state) %>%
+    mutate(unknown_race = unknown) %>%
+    select(-total,-pop, -unknown)
+  
+  r
+  
+  m <- merge(o,a)
+  
+  m
+  
+  n <- merge(m,r)
+  
+  n <- n %>%
+    select(-year) %>%
+    group_by( STATE_NAME )
+  
+  melted <- melt(n)
+  
+  melted
+  
+}
+
+plotly_radar <- function(inR, inTheta, inMax) {
+  p <- plot_ly(
+    type = 'scatterpolar',
+    # r = c(4.47, 1.78, 1.98, 0.407,0.825,1.8,1.88,2.48,1.13,7.52,2,4),
+    # theta = c('Natural Semi-Synthetic','Synth. Non Methadone','Methadone', 'Heroin', "Ages 0-24","Ages 25-34","Ages 35-44","Ages 45-54","Ages 55 and Over","White","Black","Hispanic"),
+    r = inR,
+    theta = inTheta,
+    fill = 'toself'
+  ) %>%
+    layout(
+      polar = list(
+        radialaxis = list(
+          visible = T,
+          range = c(0,inMax)
+        )
+      ),
+      showlegend = F
+    )
+  
+  p
 }
 
 

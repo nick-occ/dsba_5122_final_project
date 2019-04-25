@@ -122,11 +122,15 @@ ui <-
        tags$head(
          tags$link(rel = "stylesheet", type = "text/css", href = "app.css")
        ),
-       selectInput("states_analysis", "States", choices=c(state.name))  
+       selectInput("states_analysis", "States", choices=c(state.name)),
+       tags$hr(),
+       sliderInput("year_analysis", "Year", min=2010, max=2015,value=2010,sep = "")
      ),
      mainPanel(
       textOutput("presrate_header"),
-      plotlyOutput("presrate_death")
+      plotlyOutput("presrate_death"),
+      textOutput("radar_header"),
+      plotlyOutput("radar_death")
      )
    )
   )
@@ -157,6 +161,10 @@ server <- function(input, output) {
   
   getStateAnalysis <- reactive({
     input$states_analysis
+  })
+  
+  getYearAnalysis <- reactive({
+    input$year_analysis
   })
   
   getOpioid <- reactive({
@@ -192,6 +200,10 @@ server <- function(input, output) {
   
   getWordCloud  <- reactive({
     getWordCloudData(getState(), sym(getVariable()), 20)
+  })
+  
+  getRadarDeath <- reactive({
+    getRadarDeathData(getYearAnalysis(),getStateAnalysis())
   })
   
   output$plot <- renderWordcloud2({
@@ -340,6 +352,19 @@ server <- function(input, output) {
       geom_point(aes(color=deaths,size=deaths)) + 
       xlab("Year") + 
       ylab("Prescription Rate")
+  })
+  
+  output$radar_header <- renderText({
+    paste("Opioid Death Variables for", getStateAnalysis(), "in", getYearAnalysis())
+  })
+  
+  output$radar_death <- renderPlotly({
+    d <- getRadarDeath()
+    
+    variable <- as.vector(d$variable)
+    value <- as.vector(d$value)
+    
+    plotly_radar(value,variable, max(d$value))
   })
 }
 
