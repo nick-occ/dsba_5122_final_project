@@ -1,6 +1,4 @@
-# final project
-
-#libraries
+# libraries
 library(shiny)
 library(DT)
 library(ggplot2)
@@ -11,17 +9,18 @@ library(plotly)
 library(reshape2)
 library(shinythemes)
 
-#external source
+# external source
 source(file = 'drugs.R')
 
-#external file
-
+# constants
 START_YEAR <- 2010
 END_YEAR <- 2015
 ANIMATE_INTERVAL <- 3000
 
+# shapefile of the United States
 us <- st_read("shp/states_4326.shp")
 
+# plotly map properties
 g <- list(
   scope = 'usa',
   projection = list(type = 'albers usa'),
@@ -29,6 +28,7 @@ g <- list(
   lakecolor = toRGB('white')
 )
 
+# choices for radio button in drug data section
 variableChoiceName <- c(
   "Number of Prescribers",
   "Number of Claims",
@@ -41,7 +41,7 @@ variableChoiceValue <- c(
   "total_drug_cost"
 )
 
-
+# choices for radio button in death data section
 deathChoiceName <- c(
   "Race",
   "Age",
@@ -54,7 +54,7 @@ deathChoiceValue <- c(
   "death_by_opioids"
 )
 
-#ui portion of shiny app
+# ui portion of shiny app
 ui <- 
     # navbar menu 
     navbarPage("Opioid Research",theme = shinytheme("slate"),
@@ -62,6 +62,7 @@ ui <-
      tabPanel("Opioid Drug Data",
       sidebarLayout(
         sidebarPanel(
+          h3("Input"),
           # show state input for only word cloud and data, not map
           conditionalPanel(
             condition = "input.drugTab == 'Word Cloud' | input.drugTab == 'Data'",
@@ -76,7 +77,21 @@ ui <-
           conditionalPanel(
             condition = "input.drugTab == 'Data'",
             downloadButton("downloadData", "Download")
-          )
+          ),
+          h3("Description"),
+          p("This section focuses on looking into Medicare Part D Prescriber data to see what the most common drugs classified as opioids are being
+            prescribed.  The user has the ability to select by different variables from the dataset to see how the drug distribution changes.  This
+            allows the user to examine which are the most common drugs used and if these variable could aid in their research towards what factors
+            contribute to opioid addiction."),
+          br(),
+          p("The word cloud gives the user a high level view of what the most common opioids for the state and variable selected.
+            The data view gives the user a complete list of the drugs ranked and the user can also click the Download button to export a CSV.
+            The map view will allow the user to see how different states compare based on the variable selected from the radio button.
+            "),
+          h3("References"),
+          tags$a(href="https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/PartD2016.html",
+            "Medicare Part D Prescriber Data"
+            )
         ), 
         mainPanel(
             tags$head(
@@ -87,17 +102,17 @@ ui <-
               tabPanel("Word Cloud",
                        textOutput("drugwc_header"),
                        tags$br(),
-                       wordcloud2Output("plot", width="100%", height="80vh"),
+                       wordcloud2Output("plot", width="100%", height="75vh"),
                        tags$b(tags$caption("* Some words were trimmed to fit into plot."))
                        ),
               tabPanel("Data",
                        textOutput("drugdata_header"),
-                       DTOutput("results", height = "80vh")
+                       DTOutput("results", height = "75vh")
                        ),
               tabPanel("Map",
                        textOutput("drugmap_header"),
                        tags$br(),
-                       plotlyOutput("drugmap", height = "80vh")
+                       plotlyOutput("drugmap", height = "75vh")
                        ),
             tags$b(tags$caption("* Values shown are per 100,000 people"))
           )
@@ -106,6 +121,7 @@ ui <-
      )
     ),
     # end opioid drug tab
+    # opioid death data
     tabPanel("Death Data",
       sidebarLayout(
         sidebarPanel(
@@ -131,6 +147,8 @@ ui <-
         )
       )
     ),
+    # end opioid death data
+    # prescriber rate data
     tabPanel("Prescriber Rates",
      sidebarLayout(
        sidebarPanel(
@@ -150,6 +168,8 @@ ui <-
        )
     )
   ),
+  # end prescriber rate data
+  # analysis data
   tabPanel("Analysis",
    sidebarLayout(
      sidebarPanel(
@@ -176,11 +196,15 @@ ui <-
      )
    )
   )
+  # end prescriber rate data
 )
 
 # server portion of shiny app
 server <- function(input, output) {
   
+  # DRUG REACTIVES
+  
+  # drug data reactives for variable choice and choice name
   getVariable <- reactive({
     input$variable
   })
@@ -189,6 +213,27 @@ server <- function(input, output) {
     variableChoiceName[match(getVariable(),variableChoiceValue)]
   })
   
+  # drug data reactives for state input
+  getState <- reactive({
+    input$states
+  })
+  
+  # reactive to get opioid data for grid
+  getOpioid <- reactive({
+    getOpioidData(getState(), sym(getVariable()), 2)
+  })
+  
+  # reactive to get opioid data for word cloud
+  getWordCloud  <- reactive({
+    getWordCloudData(getState(), sym(getVariable()), 20)
+  })
+  
+  # END DRUG REACTIVES
+  
+  
+  # DEATH REACTIVES
+  
+  # death data reactives for variable choice and choice name
   getDeathChoice <- reactive({
     input$deathchoice
   })
@@ -197,27 +242,12 @@ server <- function(input, output) {
     deathChoiceName[match(getDeathChoice(),deathChoiceValue)]
   })
   
-  getState <- reactive({
-    input$states
-  })
-  
-  getStateAnalysis <- reactive({
-    input$states_analysis
-  })
-  
-  getYearAnalysis <- reactive({
-    input$year_analysis
-  })
-  
-  getOpioid <- reactive({
-    getOpioidData(getState(), sym(getVariable()), 2)
-  })
-  
-  
+  # death data reactive for year
   getDeathYear <- reactive({
     input$deathyear
   })
   
+  # reactive to get death data
   getDeath <- reactive({
     if (getDeathChoiceName() == "Race") {
       getRaceData(getDeathYear())  
@@ -228,25 +258,49 @@ server <- function(input, output) {
     }
   })
   
+  # END DEATH REACTIVES
+  
+  
+  # PRESCRIPTION RATE REACTIVES
+  
+  # reactive to get year from slider input
   getPresRateYear <- reactive({
     input$presrateyear
   })
   
+  # reactive to get prescription rate data
   getPresRate <- reactive({
     getPresRateData(getPresRateYear())
   })
   
+  # END PRESCRIPTION RATE REACTIVES
+  
+  
+  # ANALYSIS REACTIVES
+  
+  # analysis reactive for state input
+  getStateAnalysis <- reactive({
+    input$states_analysis
+  })
+  
+  # analysis reactive for year input
+  getYearAnalysis <- reactive({
+    input$year_analysis
+  })
+  
+  # analysis reactive to prescription rate vs deaths
   getPresRateDeath <- reactive({
     getPresRateDeathData(getStateAnalysis())
   })
   
-  getWordCloud  <- reactive({
-    getWordCloudData(getState(), sym(getVariable()), 20)
-  })
   
+  # analysis reactive to get data for radar plot
   getRadarDeath <- reactive({
     getRadarDeathData(getYearAnalysis(),getStateAnalysis())
   })
+  
+  # END ANALYSIS REACTIVES
+
   
   # drug data output
   
@@ -296,7 +350,7 @@ server <- function(input, output) {
   
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste(getVariableName(), ".csv", sep = "")
+      paste(getVariableName(),"_",getState(),".csv", sep = "")
     },
     content = function(file) {
       write.csv(getOpioid(), file, row.names = FALSE)

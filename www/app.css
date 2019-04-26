@@ -27,3 +27,11 @@ th, label {
 html, body {
 	height: 100%
 }
+
+p {
+  color: white;
+}
+
+a {
+  color: rgb(0, 214, 255);
+}
