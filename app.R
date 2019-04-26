@@ -302,23 +302,29 @@ server <- function(input, output) {
   # END ANALYSIS REACTIVES
 
   
-  # drug data output
+  # DRUG DATA OUTPUT
   
+  # drug data heading
+  output$drug_header <- renderText({
+    paste("2016 Medicare Part D Prescriber Data")
+  })
+  
+  # word cloud header
+  output$drugwc_header <- renderText({
+    paste("2016 Word Cloud of Most Common Opioids by", getVariableName())
+  })
+  
+  # word cloud
   output$plot <- renderWordcloud2({
     wordcloud2(getWordCloud(), size=.5, gridSize=20, color="random-light", backgroundColor = "grey",minRotation = -pi/6, maxRotation = -pi/6)
   })
   
-  plotDeathBy <- function(data, title_location, xlabel, ylabel, title_by) {
-    g <- ggplot(data,aes(reorder(variable,-value),value, fill=as.vector(unique(variable)))) + 
-      geom_bar(stat="identity") + 
-      ggtitle(paste("Opioid Deaths in", title_location, "During", getDeathYear(), "By", title_by)) + 
-      xlab(xlabel) +
-      ylab(ylabel) +
-      theme(legend.position="none")
-    
-    g
-  }
+  # data grid header
+  output$drugdata_header <- renderText({
+    paste("2016 Most Common Opioids by", getVariableName())
+  })
   
+  # data grid
   output$results <- renderDT({
     
     if (getState() == "All") {
@@ -348,6 +354,7 @@ server <- function(input, output) {
     )
   })
   
+  # download button for data grid
   output$downloadData <- downloadHandler(
     filename = function() {
       paste(getVariableName(),"_",getState(),".csv", sep = "")
@@ -357,32 +364,12 @@ server <- function(input, output) {
     }
   )
   
-  # map output
-  
-  output$drug_header <- renderText({
-    paste("2016 Medicare Part D Prescriber Data")
-  })
-  
-  output$drugwc_header <- renderText({
-    paste("2016 Word Cloud of Most Common Opioids by", getVariableName())
-  })
-  
-  output$drugdata_header <- renderText({
-    paste("2016 Most Common Opioids by", getVariableName())
-  })
-  
+  # map header
   output$drugmap_header <- renderText({
     paste("2016 Map by", getVariableName())
   })
   
-  output$death_header <- renderText({
-    paste("Opioid Deaths", "in", getDeathYear(), "by", getDeathChoiceName())
-  })
-  
-  output$presrate_header <- renderText({
-    paste("Prescriber Rates in", getPresRateYear())
-  })
-  
+  # map of drugs by different prescriber variables
   output$drugmap <- renderPlotly({
     state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
     state_map$hover <- with(state_map, paste(STATE_NAME))
@@ -397,6 +384,17 @@ server <- function(input, output) {
       )
   })
   
+  # END DRUG DATA OUTPUT
+  
+  
+  # DEATH DATA OUTPUT
+  
+  # death data header
+  output$death_header <- renderText({
+    paste("Opioid Deaths", "in", getDeathYear(), "by", getDeathChoiceName())
+  })
+  
+  # map showing total deaths in the US
   output$deathmap <- renderPlotly({
     deathmap <- merge(us,getDeath())
     deathmap$hover <- with(deathmap, paste(STATE_NAME))
@@ -412,6 +410,7 @@ server <- function(input, output) {
       )
   })
 
+  # event driven plot when user hovers over map
   output$deathby <- renderPlotly({
 
     s <- event_data("plotly_hover", source = "deathplot")
@@ -451,10 +450,31 @@ server <- function(input, output) {
     
   })
   
+  # function to generate bar chart when user hovers over map
+  plotDeathBy <- function(data, title_location, xlabel, ylabel, title_by) {
+    g <- ggplot(data,aes(reorder(variable,-value),value, fill=as.vector(unique(variable)))) + 
+      geom_bar(stat="identity") + 
+      ggtitle(paste("Opioid Deaths in", title_location, "During", getDeathYear(), "By", title_by)) + 
+      xlab(xlabel) +
+      ylab(ylabel) +
+      theme(legend.position="none")
+    
+    g
+  }
+  
+  # END DEATH DATA OUTPUT
+  
+  # PRESCRIPTION RATE OUTPUT
+  
+  # prescription rate header
+  output$presrate_header <- renderText({
+    paste("Prescriber Rates in", getPresRateYear())
+  })
+  
+  # prescription rate map
   output$presratemap <- renderPlotly({
     presRate <- getPresRate()
     
-    # state_map <- merge(us,getStateOp(sym(getVariable()),sym('Y2016'),sym('VALUE')))
     presRate$hover <- with(presRate, paste(STATE_NAME))
     
     p <-plot_geo(presRate, locationmode = 'USA-states') %>%
@@ -467,10 +487,16 @@ server <- function(input, output) {
       )
   })
   
+  # END PRESCRIPTION RATE OUTPUT
+  
+  # ANALYSIS OUTPUT
+  
+  # header for pres. rate vs death plot
   output$presratedeath_header <- renderText({
     paste("Opioid Prescriber Rate and Death Analysis for ", getStateAnalysis())
   })
   
+  # plot for pres. rate vs death plot
   output$presrate_death <- renderPlotly({
     ggplot(getPresRateDeath(),aes(year,prescriber_rate)) + 
       geom_smooth() + 
@@ -479,10 +505,12 @@ server <- function(input, output) {
       ylab("Prescription Rate")
   })
   
+  # header for radar plot
   output$radar_header <- renderText({
     paste("Opioid Death Variables for", getStateAnalysis(), "in", getYearAnalysis())
   })
   
+  # radar plot for death variables
   output$radar_death <- renderPlotly({
     d <- getRadarDeath()
     
@@ -491,6 +519,7 @@ server <- function(input, output) {
     
     plotly_radar(value,variable, max(d$value))
   })
+  # END ANALYSIS OUTPUT  
 }
 
 # run shiny app
