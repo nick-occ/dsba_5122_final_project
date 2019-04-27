@@ -108,37 +108,37 @@ getStateOp <- function(col_name, year, new_col) {
   
 }
 
-# state_pop_op <-
-#   inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
-#   mutate(
-#     number_of_prescribers = (number_of_prescribers/Y2016) * 100000,
-#     total_claim_count = (total_claim_count/Y2016) * 100000,
-#     total_drug_cost = (total_drug_cost/Y2016) * 100000
-#   ) %>%
-#   select(
-#     nppes_provider_state, 
-#     drug_name,
-#     number_of_prescribers,
-#     total_claim_count,
-#     total_drug_cost
-#   )
+state_pop_op <-
+  inner_join(state_data, population, by=c("nppes_provider_state" = "State")) %>%
+  mutate(
+    number_of_prescribers = (number_of_prescribers/Y2016) * 100000,
+    total_claim_count = (total_claim_count/Y2016) * 100000,
+    total_drug_cost = (total_drug_cost/Y2016) * 100000
+  ) %>%
+  select(
+    nppes_provider_state,
+    drug_name,
+    number_of_prescribers,
+    total_claim_count,
+    total_drug_cost
+  )
 
-# national_pop = population %>%
-#   filter(State == "United States") %>%
-#   select(Y2016)
+national_pop = population %>%
+  filter(State == "United States") %>%
+  select(Y2016)
 
-# national_pop_op <- national_data %>%
-#   mutate(
-#     number_of_prescribers = (number_of_prescribers/as.integer(national_pop)) * 100000,
-#     total_claim_count = (total_claim_count/as.integer(national_pop)) * 100000,
-#     total_drug_cost = (total_drug_cost/as.integer(national_pop)) * 100000
-#   ) %>%
-#   select(
-#     drug_name,
-#     number_of_prescribers,
-#     total_claim_count,
-#     total_drug_cost
-#   )
+national_pop_op <- national_data %>%
+  mutate(
+    number_of_prescribers = (number_of_prescribers/as.integer(national_pop)) * 100000,
+    total_claim_count = (total_claim_count/as.integer(national_pop)) * 100000,
+    total_drug_cost = (total_drug_cost/as.integer(national_pop)) * 100000
+  ) %>%
+  select(
+    drug_name,
+    number_of_prescribers,
+    total_claim_count,
+    total_drug_cost
+  )
 
 # END DRUG DATA FUNCTIONS
 
