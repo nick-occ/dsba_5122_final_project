@@ -115,7 +115,7 @@ ui <-
                        tags$br(),
                        plotlyOutput("drugmap", height = "75vh")
                        ),
-            tags$b(tags$caption("* Values shown are per 100,000 people"))
+            tags$b(tags$footer("* Values shown are per 100,000 people"))
           )
         
       )
@@ -126,6 +126,7 @@ ui <-
     tabPanel("Death Data",
       sidebarLayout(
         sidebarPanel(
+          h3("Input"),
           sliderInput(
             "deathyear", 
             "Year", 
@@ -139,12 +140,34 @@ ui <-
                        "Show by:",
                        choiceNames = deathChoiceName,
                        choiceValues = deathChoiceValue
+          ),
+          h3("Description"),
+          p("This section focuses on looking into how many opioid related death occured in the United States.
+            The user can see data for different years and they have the ability to animate through the years by clicking the play button 
+            to see how patterns change over time.  The bottom plot will show the distribution of deaths by different variables such as race, 
+            age and type of opioid.  The user can hover over a state to see the exact number of deaths and the bottom plot will also change to
+            show the death distribtion for the state currently hovered over.  This visualization will help the user focus on where a high amount
+            of deaths, the patterns over time and if there is any correlation with a persons age or race and the classification of opioid that was the
+            cause of death.
+            "),
+          h3("References"),
+          tags$a(href="https://public.opendatasoft.com/explore/dataset/opioid-overdose-deaths-by-race-and-ethnicity/export/",
+                 "OpenDataSoft - Opioid Overdose Deaths by Race/Ethnicity"
+          ),
+          br(),
+          tags$a(href="https://www.kff.org/other/state-indicator/opioid-overdose-deaths-by-age-group/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D",
+                 "Henry J Kaiser - Family Foundation - Opioid Overdose Deaths by Age Group"
+          ),
+          br(),
+          tags$a(href="https://www.kff.org/other/state-indicator/opioid-overdose-deaths-by-type-of-opioid/?currentTimeframe=2&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D",
+                 "Henry J Kaiser - Family Foundation - Opioid Overdose Deaths by Type of Opioid"
           )
         ),
         mainPanel(
           textOutput("death_header"),
           plotlyOutput("deathmap"),
-          plotlyOutput("deathby")
+          plotlyOutput("deathby"),
+          tags$b(tags$footer("* Values shown are per 100,000 people"))
         )
       )
     ),
@@ -153,6 +176,7 @@ ui <-
     tabPanel("Prescriber Rates",
      sidebarLayout(
        sidebarPanel(
+         h3("Input"),
          sliderInput(
            "presrateyear", 
            "Year", 
@@ -161,11 +185,28 @@ ui <-
            value=START_YEAR,
            sep = "",
            animate = animationOptions(interval = ANIMATE_INTERVAL, loop = TRUE)
-           )
+           ),
+         h3("Description"),
+         p("This section focuses on looking into prescription rates in the United States.
+            The user can see data for different years and they have the ability to animate through the years by clicking the play button 
+           to see how patterns change over time.  The user can hover over a state to see the prescriber rate for that state.  When the user clicks the
+          the map it will generate a county view of the state that shows if the prescription amounts have increased, decreased or stabalized between 
+          2010 and 2015.  These plots will help the user focus on where high prescriber rates occur to visualize patterns over time and also get a detailed view
+          at the county level.
+           "),
+         h3("References"),
+         tags$a(href="https://www.cdc.gov/drugoverdose/maps/rxrate-maps.html",
+                "CDC - Centers for Disease Control - U.S. Opioid Prescribing Rate Maps"
+         ),
+         br(),
+         tags$a(href="https://data.world/associatedpress/opioid-prescriptions-2010-2015",
+                "data.world - Opioid Prescriptions, 2010 + 2015"
+         )
        ),
        mainPanel(
          textOutput("presrate_header"),
          plotlyOutput("presratemap"),
+         tags$b(tags$caption("* Values shown are per 100 US residents")),
          plotlyOutput("prescounty")
        )
     )
@@ -178,6 +219,7 @@ ui <-
        tags$head(
          tags$link(rel = "stylesheet", type = "text/css", href = "app.css")
        ),
+       h3("Input"),
        selectInput("states_analysis", "States", choices=c(state.name)),
        tags$hr(),
        sliderInput(
@@ -188,13 +230,42 @@ ui <-
          value=START_YEAR,
          sep = "",
          animate = animationOptions(interval = ANIMATE_INTERVAL, loop = TRUE)
-         )
+         ),
+       h3("Description"),
+       p("The analysis sections focuses on what the findings are based on the previous section and helping users draw conclusions from the data.
+        The first visualization allows a user to select a state and compare prescription rates with the number of opioid related deaths over time.
+        The idea is that reasearchers can use the previous sections to help guide there focus to certain states and then use the analysis tab to see
+        the relationships between the different dataset.
+        The second visualization is a radar chart that takes all the variables related to deaths and shows how they compare to one another.
+        This not only allows the researcher to find patterns about which race, age groups and type of opioids are high and where to focus research,
+        but alos how the different variable change over time.
+        The researcher
+         "),
+       h3("References"),
+       tags$a(href="https://public.opendatasoft.com/explore/dataset/opioid-overdose-deaths-by-race-and-ethnicity/export/",
+              "OpenDataSoft - Opioid Overdose Deaths by Race/Ethnicity"
+       ),
+       br(),
+       tags$a(href="https://www.kff.org/other/state-indicator/opioid-overdose-deaths-by-age-group/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D",
+              "Henry J Kaiser - Family Foundation - Opioid Overdose Deaths by Age Group"
+       ),
+       br(),
+       tags$a(href="https://www.kff.org/other/state-indicator/opioid-overdose-deaths-by-type-of-opioid/?currentTimeframe=2&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D",
+              "Henry J Kaiser - Family Foundation - Opioid Overdose Deaths by Type of Opioid"
+       ),
+       br(),
+       tags$a(href="https://www.cdc.gov/drugoverdose/maps/rxrate-maps.html",
+              "CDC - Centers for Disease Control - U.S. Opioid Prescribing Rate Maps"
+       )
      ),
      mainPanel(
       textOutput("presratedeath_header"),
       plotlyOutput("presrate_death"),
       textOutput("radar_header"),
-      plotlyOutput("radar_death")
+      plotlyOutput("radar_death"),
+      tags$b(tags$caption("* Prescription rates shown are per 100 US residents")),
+      br(),
+      tags$b(tags$caption("* Deaths shown are per 100,000 people")),tags$b(tags$caption("* Values shown are per 100 US residents"))
      )
    )
   )
@@ -412,7 +483,8 @@ server <- function(input, output) {
         color = ~total, colors = 'Reds', key=~STATE_NAME
       ) %>%
       layout(
-        geo = g
+        geo = g,
+        title = paste("Opioid Deaths in the US", "During", getDeathYear())
       )
   })
 
@@ -489,7 +561,8 @@ server <- function(input, output) {
         color = ~prescriber_rate, colors = 'Reds', key=~STATE_NAME
       ) %>%
       layout(
-        geo = g
+        geo = g,
+        title = paste("Opioid Prescription Rate in the US", "During", getPresRateYear())
       )
   })
   
