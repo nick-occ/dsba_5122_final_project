@@ -8,6 +8,7 @@ library(sf)
 library(plotly)
 library(reshape2)
 library(shinythemes)
+library(memoise)
 
 # external source
 source(file = 'drugs.R')
@@ -20,6 +21,20 @@ ANIMATE_INTERVAL <- 3000
 # shapefile of the United States
 us <- st_read("shp/states_4326.shp")
 county<- st_read("shp/counties_4326.shp")
+
+getPresRateCountyData <- memoise(function(state) {
+  select_county <- county %>%
+    filter(STATE_NAME == state)
+  
+  p <- ggplot() + 
+    geom_sf(data=select_county, aes(label=NAME,fill=X2010_2015_)) + theme_bw() + 
+    ggtitle(paste('Opioid Prescription Amounts By County Between 2010 to 2015 in', state)) +
+    labs(fill = "Change")
+  
+  gp <- ggplotly(p, tooltip=c("label","fill"))
+  gp
+  
+})
 
 # plotly map properties
 g <- list(
@@ -346,10 +361,6 @@ server <- function(input, output) {
     getPresRateData(getPresRateYear())
   })
   
-  getPresCounty <- reactive({
-    getPresCountyData(2010, "North Carolina")
-  })
-  
   # END PRESCRIPTION RATE REACTIVES
   
   
@@ -570,17 +581,17 @@ server <- function(input, output) {
       s <- event_data("plotly_click", source = "presrateplot")
       
       if (length(s) > 0) {
+        getPresRateCountyData(s[['key']])
         
-        
-        select_county <- county %>%
-          filter(STATE_NAME == s[['key']])
-        
-        p <- ggplot() + 
-          geom_sf(data=select_county, aes(label=NAME,fill=X2010_2015_)) + theme_bw() + 
-          ggtitle(paste('Opioid Prescription Amounts By County Between 2010 to 2015 in', s[['key']])) +
-          labs(fill = "Change")
-        
-        ggplotly(p, tooltip=c("label","fill"))
+        # select_county <- county %>%
+        #   filter(STATE_NAME == s[['key']])
+        # 
+        # p <- ggplot() + 
+        #   geom_sf(data=select_county, aes(label=NAME,fill=X2010_2015_)) + theme_bw() + 
+        #   ggtitle(paste('Opioid Prescription Amounts By County Between 2010 to 2015 in', s[['key']])) +
+        #   labs(fill = "Change")
+        # 
+        # ggplotly(p, tooltip=c("label","fill"))
       }
   })
   
