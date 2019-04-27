@@ -2,6 +2,7 @@ library(dplyr)
 library(reshape2)
 library(scales)
 library(plotly)
+library(memoise)
 
 # external files
 state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
@@ -61,7 +62,7 @@ getOpioidData <- function(state, variable, rounding) {
 }
 
 # get data for word cloud
-getWordCloudData <- function(state, variable, charLength) {
+getWordCloudData <- memoise(function(state, variable, charLength) {
   result <- getDataSource(state) %>%
     mutate(
       freq = round(!!variable),
@@ -79,7 +80,7 @@ getWordCloudData <- function(state, variable, charLength) {
     na.omit()
   
   result
-}
+})
 
 # get state data for column that is passed for the given year
 getStateOp <- function(col_name, year, new_col) {
