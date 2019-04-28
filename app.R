@@ -156,6 +156,11 @@ ui <-
                        choiceNames = deathChoiceName,
                        choiceValues = deathChoiceValue
           ),
+          # show download only for the data tab
+          conditionalPanel(
+            condition = "input.deathTab == 'Data'",
+            downloadButton("downloadDeathData", "Download")
+          ),
           h3("Description"),
           p("This section focuses on looking into how many opioid related death occured in the United States.
             The user can see data for different years and they have the ability to animate through the years by clicking the play button 
@@ -180,9 +185,16 @@ ui <-
         ),
         mainPanel(
           textOutput("death_header"),
-          plotlyOutput("deathmap"),
-          plotlyOutput("deathby"),
-          tags$b(tags$footer("* Values shown are per 100,000 people"))
+          tabsetPanel(id="deathTab",
+            tabPanel("Map",
+              plotlyOutput("deathmap"),
+              plotlyOutput("deathby")
+            ),
+            tabPanel("Data",
+             DTOutput("deathresults", height = "75vh")
+            ),
+            tags$b(tags$footer("* Values shown are per 100,000 people"))
+          )
         )
       )
     ),
@@ -200,6 +212,11 @@ ui <-
            value=START_YEAR,
            sep = "",
            animate = animationOptions(interval = ANIMATE_INTERVAL, loop = TRUE)
+           ),
+           # show download only for the data tab
+           conditionalPanel(
+             condition = "input.presRateTab == 'Data'",
+             downloadButton("downloadPresRateData", "Download")
            ),
          h3("Description"),
          p("This section focuses on looking into prescription rates in the United States.
@@ -220,9 +237,17 @@ ui <-
        ),
        mainPanel(
          textOutput("presrate_header"),
-         plotlyOutput("presratemap"),
-         tags$b(tags$caption("* Values shown are per 100 US residents")),
-         plotlyOutput("prescounty")
+         tabsetPanel(id="presRateTab",
+            tabPanel("Map",
+               plotlyOutput("presratemap"),
+               tags$b(tags$caption("* Values shown are per 100 US residents")),
+               plotlyOutput("prescounty")          
+            ),
+            tabPanel("Data",
+               DTOutput("presrateresults", height = "75vh"),
+               tags$b(tags$caption("* Values shown are per 100 US residents"))
+            )
+         )
        )
     )
   ),
@@ -431,11 +456,7 @@ server <- function(input, output) {
           $(this.api().table().header()).css({
             'background-color': '#f00',
             'color': '#fff'
-          });
-          $(this.api().table().body()).css({
-            'background-color': '#f00',
-            'color': '#fff'
-          });
+          })
         }")
       ),
       colnames=colnames
@@ -539,6 +560,35 @@ server <- function(input, output) {
     
   })
   
+  output$deathresults <- renderDT({
+    datatable(
+      getDeath() %>%
+        arrange(desc(total)), 
+      options = list(
+        lengthMenu = c(15, 30, 45), 
+        pageLength = 15,
+        initComplete = JS("
+                          function(settings, json) {
+                          $(this.api().table().header()).css({
+                          'background-color': '#f00',
+                          'color': '#fff'
+                          })
+                          }")
+      )
+    )
+  })
+  
+  # download button for data grid
+  output$downloadDeathData <- downloadHandler(
+    filename = function() {
+      paste("opioid_deaths_by_",getDeathChoiceName(),"_",getDeathYear(),".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(getDeath() %>%
+                  arrange(desc(total)), file, row.names = FALSE)
+    }
+  )
+  
   # function to generate bar chart when user hovers over map
   plotDeathBy <- function(data, title_location, xlabel, ylabel, title_by) {
     g <- ggplot(data,aes(reorder(variable,-value),value, fill=as.vector(unique(variable)))) + 
@@ -577,22 +627,40 @@ server <- function(input, output) {
       )
   })
   
+  output$downloadPresRateData <- downloadHandler(
+    filename = function() {
+      paste("prescription_rate_by_state_",getPresRateYear(),".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(getPresRate() %>%
+                  arrange(desc(prescriber_rate)), file, row.names = FALSE)
+    }
+  )
+  
   output$prescounty <- renderPlotly({
       s <- event_data("plotly_click", source = "presrateplot")
       
       if (length(s) > 0) {
         getPresRateCountyData(s[['key']])
-        
-        # select_county <- county %>%
-        #   filter(STATE_NAME == s[['key']])
-        # 
-        # p <- ggplot() + 
-        #   geom_sf(data=select_county, aes(label=NAME,fill=X2010_2015_)) + theme_bw() + 
-        #   ggtitle(paste('Opioid Prescription Amounts By County Between 2010 to 2015 in', s[['key']])) +
-        #   labs(fill = "Change")
-        # 
-        # ggplotly(p, tooltip=c("label","fill"))
       }
+  })
+  
+  output$presrateresults <- renderDT({
+    datatable(
+      getPresRate() %>%
+        arrange(desc(prescriber_rate)), 
+      options = list(
+        lengthMenu = c(15, 30, 45), 
+        pageLength = 15,
+        initComplete = JS("
+                          function(settings, json) {
+                          $(this.api().table().header()).css({
+                          'background-color': '#f00',
+                          'color': '#fff'
+                          })
+                          }")
+      )
+        )
   })
   
   # END PRESCRIPTION RATE OUTPUT
