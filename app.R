@@ -187,11 +187,11 @@ ui <-
           textOutput("death_header"),
           tabsetPanel(id="deathTab",
             tabPanel("Map",
-              plotlyOutput("deathmap"),
-              plotlyOutput("deathby")
+              plotlyOutput("deathmap", height = "40vh"),
+              plotlyOutput("deathby", height = "40vh")
             ),
             tabPanel("Data",
-             DTOutput("deathresults", height = "75vh")
+             DTOutput("deathresults", height = "50vh")
             ),
             tags$b(tags$footer("* Values shown are per 100,000 people"))
           )
@@ -239,9 +239,9 @@ ui <-
          textOutput("presrate_header"),
          tabsetPanel(id="presRateTab",
             tabPanel("Map",
-               plotlyOutput("presratemap"),
+               plotlyOutput("presratemap", height = "40vh"),
                tags$b(tags$caption("* Values shown are per 100 US residents")),
-               plotlyOutput("prescounty")          
+               plotlyOutput("prescounty", height = "40vh")          
             ),
             tabPanel("Data",
                DTOutput("presrateresults", height = "75vh"),
@@ -300,9 +300,9 @@ ui <-
      ),
      mainPanel(
       textOutput("presratedeath_header"),
-      plotlyOutput("presrate_death"),
+      plotlyOutput("presrate_death", height = "40vh"),
       textOutput("radar_header"),
-      plotlyOutput("radar_death"),
+      plotlyOutput("radar_death", height = "40vh"),
       tags$b(tags$caption("* Prescription rates shown are per 100 US residents")),
       br(),
       tags$b(tags$caption("* Deaths shown are per 100,000 people")),tags$b(tags$caption("* Values shown are per 100 US residents"))
