@@ -229,7 +229,7 @@ getOpioidDeathData <- function(inYear, state="United States") {
 }
 
 # get death data by state include multiplier for weighted value
-getDeathDataByState <- function(data, multiplier, state="United States") {
+getDeathDataByState <- memoise(function(data, multiplier, state="United States") {
   result <- data %>%
     filter(STATE_NAME == state & year >= 2010)
   
@@ -244,7 +244,7 @@ getDeathDataByState <- function(data, multiplier, state="United States") {
     select(STATE_NAME, year, deaths)
   
   result
-}
+})
 
 # END DEATH DATA FUNCTIONS
 
@@ -259,26 +259,26 @@ getPresRateData <- function(inYear) {
 }
 
 # get prescription rate data by state passed
-getPresRateDataByState <- function(state) {
+getPresRateDataByState <- memoise(function(state) {
   result <-prescriber_rates %>%
     filter(STATE_NAME == state) %>%
     select(STATE_NAME,year,prescriber_rate)
 
   result
-}
+})
 
 # END PRESCRIPTION RATE FUNCTIONS
 
 # ANALYSIS FUNCTIONS
 
 # merge prescription rates with death data by state that is passed
-getPresRateDeathData <- function(state) {
+getPresRateDeathData <- memoise(function(state) {
   m <- merge(getPresRateDataByState(state),getDeathDataByState(opioids_race_data,100000,state))
   m
-}
+})
 
 # get data for radar plot analysis
-getRadarDeathData <- function(inYear, state) {
+getRadarDeathData <- memoise(function(inYear, state) {
   o <- getOpioidDeathData(inYear, state) %>%
     filter(STATE_NAME == state) %>%
     select(-total,-pop)
@@ -311,7 +311,7 @@ getRadarDeathData <- function(inYear, state) {
   
   melted
   
-}
+})
 
 # create radar plot from data that is passed in
 plotly_radar <- function(inR, inTheta, inMax) {
