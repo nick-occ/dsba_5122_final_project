@@ -229,7 +229,7 @@ getOpioidDeathData <- function(inYear, state="United States") {
 }
 
 # get death data by state include multiplier for weighted value
-getDeathDataByState <- function(data, state="United States", multiplier) {
+getDeathDataByState <- function(data, multiplier, state="United States") {
   result <- data %>%
     filter(STATE_NAME == state & year >= 2010)
   
@@ -273,7 +273,7 @@ getPresRateDataByState <- function(state) {
 
 # merge prescription rates with death data by state that is passed
 getPresRateDeathData <- function(state) {
-  m <- merge(getPresRateDataByState(state),getDeathDataByState(opioids_race_data,state,100000))
+  m <- merge(getPresRateDataByState(state),getDeathDataByState(opioids_race_data,100000,state))
   m
 }
 
@@ -332,6 +332,22 @@ plotly_radar <- function(inR, inTheta, inMax) {
     )
   
   p
+}
+
+getPrescriberRateUSAvg <- function() {
+  result <- prescriber_rates %>%
+    group_by(year) %>%
+    summarise(prescriber_rate = mean(prescriber_rate)) %>%
+    select(year,prescriber_rate)
+  
+  result
+}
+
+getDeathUSAvg <- function() {
+  result <- getDeathDataByState(opioids_age_data,100000) %>%
+    select(year, deaths)
+  
+  result
 }
 
 # END ANALYSIS FUNCTIONS

@@ -674,11 +674,27 @@ server <- function(input, output) {
   
   # plot for pres. rate vs death plot
   output$presrate_death <- renderPlotly({
-    ggplot(getPresRateDeath(),aes(year,prescriber_rate)) + 
+    g <- ggplot(getPresRateDeath(),aes(year,prescriber_rate)) + 
       geom_smooth() + 
       geom_point(aes(color=deaths,size=deaths)) + 
       xlab("Year") + 
-      ylab("Prescription Rate")
+      ylab("Prescription Rate") + 
+      scale_color_gradient2(low="#a3d4ff", high="#1f4364")
+    
+    us_avg <- merge(getPrescriberRateUSAvg(),getDeathUSAvg())
+    
+    max_year <- us_avg %>%
+      filter(year == as.numeric(max(us_avg$year))-1) %>%
+      select(year, prescriber_rate)
+    
+    g <- g + 
+      geom_line(data=us_avg, aes(year,prescriber_rate), color="red") +
+      geom_text(data=max_year, aes((year),(prescriber_rate + 5), label="National Average"), color="red") +
+      geom_point(data=us_avg, aes(size=deaths),color="red")
+    
+    
+    g
+    
   })
   
   # header for radar plot
