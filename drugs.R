@@ -3,6 +3,7 @@ library(reshape2)
 library(scales)
 library(plotly)
 library(memoise)
+library(sf)
 
 # external files
 state_data = readxl::read_xlsx('./data/PartD_Prescriber_PUF_Drug_St_16_Cleaned.xlsx')
@@ -12,6 +13,7 @@ opioids_race_data = readxl::read_xlsx('./data/opioid_death_by_race_cleaned.xlsx'
 opioids_age_data = readxl::read_xlsx('./data/opioid_overdose_death_by_age_group.xlsx')
 death_by_opioids = readxl::read_xlsx('./data/death_by_opioid.xlsx')
 prescriber_rates = readxl::read_xlsx('./data/opioid_prescriber_rates.xlsx')
+county<- st_read("shp/counties_4326.shp")
 
 # HELPER FUNCTIONS
 
@@ -265,6 +267,22 @@ getPresRateDataByState <- memoise(function(state) {
     select(STATE_NAME,year,prescriber_rate)
 
   result
+})
+
+
+
+getPresRateCountyData <- memoise(function(state) {
+  select_county <- county %>%
+    filter(STATE_NAME == state)
+  
+  p <- ggplot() + 
+    geom_sf(data=select_county, aes(label=NAME,fill=X2010_2015_)) + theme_bw() + 
+    ggtitle(paste('Opioid Prescription Amounts By County Between 2010 to 2015 in', state)) +
+    labs(fill = "Change")
+  
+  gp <- ggplotly(p, tooltip=c("label","fill"))
+  gp
+  
 })
 
 # END PRESCRIPTION RATE FUNCTIONS

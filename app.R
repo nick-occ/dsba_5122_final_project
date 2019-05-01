@@ -20,21 +20,7 @@ ANIMATE_INTERVAL <- 3000
 
 # shapefile of the United States
 us <- st_read("shp/states_4326.shp")
-county<- st_read("shp/counties_4326.shp")
 
-getPresRateCountyData <- memoise(function(state) {
-  select_county <- county %>%
-    filter(STATE_NAME == state)
-  
-  p <- ggplot() + 
-    geom_sf(data=select_county, aes(label=NAME,fill=X2010_2015_)) + theme_bw() + 
-    ggtitle(paste('Opioid Prescription Amounts By County Between 2010 to 2015 in', state)) +
-    labs(fill = "Change")
-  
-  gp <- ggplotly(p, tooltip=c("label","fill"))
-  gp
-  
-})
 
 # plotly map properties
 g <- list(
