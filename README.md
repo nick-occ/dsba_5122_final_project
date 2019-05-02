@@ -31,3 +31,6 @@ https://nocchipi.shinyapps.io/dsba_5122_final_project/
 * Some styling is generated through a CSS file located in the __www__ folder called __app.css__.
 * Geographic data shapefiles that were used are located in the __shp__ folder.
 * Tabular data that was loaded into our application is stored in the __data__ folder.
+
+##
+For more information about our research, data and application view https://bookdown.org/nocchipi/dsba-5122-final_report/
