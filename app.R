@@ -294,9 +294,57 @@ ui <-
       tags$b(tags$caption("* Deaths shown are per 100,000 people")),tags$b(tags$caption("* Values shown are per 100 US residents"))
      )
    )
-  )
+  ),
   # end prescriber rate data
+  tabPanel("About",
+    h2("Project Information",style="text-align:center"),
+    tags$article("This was a research project for DSBA-5122 at UNC Charlotte.  
+      For the project we wanted to explore data related to opioids, 
+      in an effort to better understand and get more insight into the opioid epidemic. 
+      Our domain problem is one for a researcher wanting to explore the connection between 
+      prescriber rates of opioid prescriptions and opioid related deaths both in the country
+      as a whole and drilling down to the state level. The first part we wanted to look at was data on prescribers. 
+      This data would allow the researcher to see the distribution of opioids
+      across the US and also find the most commonly prescribed opioids. 
+      The second part of the data involved finding information about deaths that occur from opioid overdoses
+      in the United States. This would also allow the researcher to drill down to the state level. 
+      Another level of detail that we felt would be an important task for the researcher is to categorize 
+      these deaths into different types of groups such as race and age. 
+      This would add another level of detail and help identify groups that are suffering from opioid addiction, 
+      which would then allow researchers to provide information and where attention needs to be focused the most to 
+      combat the opioid epidemic.", style="padding:2%"),
+    h2("Fork us on Github",style="text-align:center"),
+    div(
+      p("All our code is open source, please feel free run our code and use as is or develop new features:"),
+            a(href="https://github.com/nick-occ/dsba_5122_final_project", "nick-occ/dsba_5122_final_project")
+      , style='text-align:center'
+    ),
+    br(),
+    h2("Ideas for new development",style="text-align:center"),
+    div(
+      p("To review the features we implemented and see new features we would like to add in a future release visit:"),
+      a(href="https://github.com/nick-occ/dsba_5122_final_project/projects/1",
+        "https://github.com/nick-occ/dsba_5122_final_project/projects/1")
+      , style='text-align:center'
+    ),
+    br(),
+    h2("Final Report",style="text-align:center"),
+    div(
+      p("Our final report is available for review at:"),
+      a(href="https://bookdown.org/nocchipi/dsba-5122-final_report/",
+        "https://bookdown.org/nocchipi/dsba-5122-final_report/")
+      , style='text-align:center'
+    ),
+    br(),
+    div(
+      h2("Created By:"),
+      h5("- Nicholas Occhipinti"),
+      h5("- Karyn Cook"),
+      h5("- Ziyin Liu")
+      ,style="text-align:center")
+  )
 )
+
 
 # server portion of shiny app
 server <- function(input, output) {
