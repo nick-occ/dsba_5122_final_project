@@ -227,7 +227,7 @@ ui <-
             tabPanel("Map",
                plotlyOutput("presratemap", height = "40vh"),
                tags$b(tags$caption("* Values shown are per 100 US residents")),
-               plotlyOutput("prescounty", height = "40vh")          
+               plotOutput("prescounty", height = "40vh")          
             ),
             tabPanel("Data",
                DTOutput("presrateresults", height = "75vh"),
@@ -623,7 +623,7 @@ server <- function(input, output) {
     }
   )
   
-  output$prescounty <- renderPlotly({
+  output$prescounty <- renderPlot({
       s <- event_data("plotly_click", source = "presrateplot")
       
       if (length(s) > 0) {

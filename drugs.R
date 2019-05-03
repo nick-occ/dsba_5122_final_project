@@ -278,10 +278,10 @@ getPresRateCountyData <- memoise(function(state) {
   p <- ggplot() + 
     geom_sf(data=select_county, aes(label=NAME,fill=X2010_2015_)) + theme_bw() + 
     ggtitle(paste('Opioid Prescription Amounts By County Between 2010 to 2015 in', state)) +
-    labs(fill = "Change")
+    labs(fill = "Change") + 
+    theme(plot.title = element_text(hjust = 0.5))
   
-  gp <- ggplotly(p, tooltip=c("label","fill"))
-  gp
+  p
   
 })
 
