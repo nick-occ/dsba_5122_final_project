@@ -313,14 +313,14 @@ ui <-
       This would add another level of detail and help identify groups that are suffering from opioid addiction, 
       which would then allow researchers to provide information and where attention needs to be focused the most to 
       combat the opioid epidemic.", style="padding:2%"),
-    h2("Fork us on Github",style="text-align:center"),
+    h2("Get the Code at Github",style="text-align:center"),
     div(
       p("All our code is open source, please feel free run our code and use as is or develop new features:"),
             a(href="https://github.com/nick-occ/dsba_5122_final_project", "nick-occ/dsba_5122_final_project")
       , style='text-align:center'
     ),
     br(),
-    h2("Ideas for new development",style="text-align:center"),
+    h2("Ideas for New Development",style="text-align:center"),
     div(
       p("To review the features we implemented and see new features we would like to add in a future release visit:"),
       a(href="https://github.com/nick-occ/dsba_5122_final_project/projects/1",
