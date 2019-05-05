@@ -83,10 +83,10 @@ ui <-
           h3("Description"),
           p("This section focuses on looking into Medicare Part D Prescriber data to see what the most common drugs classified as opioids are being
             prescribed.  The user has the ability to select by different variables from the dataset to see how the drug distribution changes.  This
-            allows the user to examine which are the most common drugs used and if these variable could aid in their research towards what factors
+            allows the user to examine which are the most common drugs used and if these variables could aid in their research towards what factors
             contribute to opioid addiction."),
           br(),
-          p("The word cloud gives the user a high level view of what the most common opioids for the state and variable selected.
+          p("The word cloud gives the user a high level view of what the most common opioids are for the state and variable selected.
             The data view gives the user a complete list of the drugs ranked and the user can also click the Download button to export a CSV.
             The map view will allow the user to see how different states compare based on the variable selected from the radio button.
             "),
@@ -148,12 +148,12 @@ ui <-
             downloadButton("downloadDeathData", "Download")
           ),
           h3("Description"),
-          p("This section focuses on looking into how many opioid related death occured in the United States.
+          p("This section focuses on looking into how many opioid related deaths occured in the United States.
             The user can see data for different years and they have the ability to animate through the years by clicking the play button 
             to see how patterns change over time.  The bottom plot will show the distribution of deaths by different variables such as race, 
             age and type of opioid.  The user can hover over a state to see the exact number of deaths and the bottom plot will also change to
             show the death distribtion for the state currently hovered over.  This visualization will help the user focus on where a high amount
-            of deaths, the patterns over time and if there is any correlation with a persons age or race and the classification of opioid that was the
+            of deaths occur, the patterns over time and if there is any correlation with a persons age or race and the classification of opioid that was the
             cause of death.
             "),
           h3("References"),
@@ -207,8 +207,8 @@ ui <-
          h3("Description"),
          p("This section focuses on looking into prescription rates in the United States.
             The user can see data for different years and they have the ability to animate through the years by clicking the play button 
-           to see how patterns change over time.  The user can hover over a state to see the prescriber rate for that state.  When the user clicks the
-          the map it will generate a county view of the state that shows if the prescription amounts have increased, decreased or stabalized between 
+           to see how patterns change over time.  The user can hover on a state to see the prescriber rate for that state.  When the user clicks the
+          the map it will generate a county view of the state that shows if the prescription amounts have increased, decreased or stabilized between 
           2010 and 2015.  These plots will help the user focus on where high prescriber rates occur to visualize patterns over time and also get a detailed view
           at the county level.
            "),
@@ -258,14 +258,14 @@ ui <-
          animate = animationOptions(interval = ANIMATE_INTERVAL, loop = TRUE)
          ),
        h3("Description"),
-       p("The analysis sections focuses on what the findings are based on the previous section and helping users draw conclusions from the data.
-        The first visualization allows a user to select a state and compare prescription rates with the number of opioid related deaths over time.
+       p("The analysis sections focuses on what the findings are based on the data from the previous sections and help the users draw conclusions from the data.
+        The first visualization allows a user to select a state and compare prescription rates with the number of opioid related deaths over time.  We included the
+        national average as a reference to see the level of impact of the selected state over time.
         The idea is that reasearchers can use the previous sections to help guide there focus to certain states and then use the analysis tab to see
         the relationships between the different dataset.
         The second visualization is a radar chart that takes all the variables related to deaths and shows how they compare to one another.
         This not only allows the researcher to find patterns about which race, age groups and type of opioids are high and where to focus research,
-        but alos how the different variable change over time.
-        The researcher
+        but also how the different variable change over time.
          "),
        h3("References"),
        tags$a(href="https://public.opendatasoft.com/explore/dataset/opioid-overdose-deaths-by-race-and-ethnicity/export/",
